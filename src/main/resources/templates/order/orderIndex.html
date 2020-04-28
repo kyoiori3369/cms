@@ -1,0 +1,287 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:v-on="http://www.w3.org/1999/xhtml"
+      xmlns:v-bind="http://www.w3.org/1999/xhtml" xmlns:>
+<head th:replace="common/head::head"></head>
+<body class="hold-transition skin-blue sidebar-mini">
+<div class="wrapper">
+    <th:block th:replace="header::header"/>
+    <th:block th:replace="menu::menu(1, 0)"/>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header" >
+            <h1 th:replace="common/name::content"></h1>
+            <ol class="breadcrumb">
+                <li><a href="javascript:void(0);"><i class="fa fa-server"></i> 生成总览</a></li>
+            </ol>
+        </section>
+        <div style="margin-top: -1%;padding: 2%">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">销售额度</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="container" style="height: 100%;min-height: 250px">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-primary">
+                     <div class="panel-heading">
+                        <h3 class="panel-title">核心设备出货分布</h3>
+                     </div>
+                      <div class="panel-body">
+                       <div id="container2" style="height: 100%;min-height: 250px">
+                       </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!--    <div class="content" id="container" style="height: 100%;min-height: 350px"></div>
+        <div class="content" id="container2" style="height: 100%;min-height: 350px"></div>-->
+        <!-- Main content -->
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">设备进度总览</h3>
+            </div>
+            <div class="panel-body">
+           <section class="" id="app">
+            <div class="box">
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <div class="mailbox-controls clearfix">
+                        <!-- /.btn-group -->
+                        <button type="button" class="btn btn-default btn-sm" v-on:click="search(1);"><i class="fa fa-refresh"></i></button>
+                        <div class="pull-right">
+                            <div class="box-tools" style="display:inline-block">
+                                <div class="input-group input-group-sm" style="width: 100%;margin-right:-25px">
+                                    <input type="text" name="orderNumber" class="form-control pull-right"
+                                           placeholder="订单编号"/>
+                                </div>
+                            </div>
+                            <div class="box-tools" style="display:inline-block">
+                            <div class="input-group input-group-sm" style="width: 150px;">
+                                <input type="text" name="deviceNumber" class="form-control pull-right"
+                                       placeholder="设备编号"/>
+                                <div class="input-group-btn">
+                                    <button type="submit" class="btn btn-default" v-on:click="search(1);"><i class="fa fa-search"></i>查询</button>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        <!-- /.pull-right -->
+                    </div>
+
+
+                    <div class="table-responsive mailbox-messages">
+                        <table class="table table-hover">
+                            <tr>
+                                <!-- Check all button -->
+                                <th nowrap="true">订单编号</th>
+                                <th nowrap="true">客户名称</th>
+                                <th nowrap="true">设备编号</th>
+                                <th nowrap="true">设备名称</th>
+                                <th nowrap="true">订单时间</th>
+                                <th nowrap="true">计划排期</th>
+                                <th nowrap="true">出库状态</th>
+                                <th nowrap="true">装配状态</th>
+                                <th nowrap="true">调试进度</th>
+                                <th nowrap="true">出货状态</th>
+                            </tr>
+                            <tr v-for="item in overviews">
+                                <td nowrap="true">{{item.orderNumber}}</td>
+                                <td nowrap="true">{{item.companyName}}</td>
+                                <td nowrap="true">{{item.planCode}}</td>
+                                <td nowrap="true">{{item.deviceName}}</td>
+                                <td nowrap="true">{{item.orderTime}}</td>
+                                <td nowrap="true">{{item.status == 0 ? '未排期':'已排期'}}</td>
+                                <td nowrap="true">{{item.outPercent}}%</td>
+                                <td nowrap="true">{{item.assemblingStatus}}%</td>
+                                <td nowrap="true">{{item.flagStatus}}</td>
+                                <td nowrap="true">{{item.loadingState}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer clearfix">
+                    <ul class="pagination pagination-sm no-margin pull-right">
+                        <li><a href="javascript:void(0);" v-on:click="search(1);">&laquo;</a></li>
+                        <li v-for="item in size" v-if="item == page"><a href="javascript:void(0);">{{item}}</a></li>
+                        <li v-else="v-else"><a href="javascript:void(0);" v-on:click="search(item);">{{item}}</a></li>
+                        <li><a href="javascript:void(0);" v-on:click="search(size);">&raquo;</a></li>
+                    </ul>
+                </div>
+              </div>
+        </section>
+            </div>
+          </div>
+        </div>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <th:block th:replace="footer::footer"/>
+</div>
+<!-- ./wrapper -->
+</body>
+<script type="text/javascript" th:src="@{/scripts/js/echarts.min.js}"></script>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    $(function () {
+        var vue = new Vue({
+            el: "#app",
+            data: {
+                total: 0,
+                start: 0,
+                end: 0,
+                size: 0,
+                page: 1,
+                rows: 10,
+                overviews: [],
+                customers:[],
+                orderDevices:[],
+                pager: {},
+                orderManage: {},
+                orderDevice:{},
+                dialog: {},
+            },
+            methods: {
+                search: function (index) {
+                    var size = Math.ceil(this.total / this.rows);
+                    if (!index) {
+                        index = 1;
+                    }
+                    if (index > size) {
+                        index = size;
+                    }
+                    if (index < 1) {
+                        index = 1;
+                    }
+                    this.page = index;
+                    var _self = this;
+                    var url = [[@{/api/historicalRecord/overview}]];
+                    $.get(url, {
+                        orderNumber: $("input[name='orderNumber']").val(),
+                        deviceNumber: $("input[name='deviceNumber']").val(),
+                        page: this.page,
+                        rows: this.rows
+                    }, function (datas) {
+                        if (datas && datas.overviews) {
+                            _self.overviews = datas.overviews;
+                            _self.total = datas.pager.total;
+                            _self.size = Math.ceil(_self.total / _self.rows);
+                            _self.start = (_self.page - 1) * _self.rows + 1;
+                            _self.end = Math.min(_self.total, _self.page * _self.rows);
+                        }
+                    }).error(function (XMLHttpRequest) {
+                        window.top.errorMessage(XMLHttpRequest);
+                    });
+                },
+            }
+        });
+        vue.search(1);
+       $(".checkbox-toggle").click(function () {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                //Uncheck all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                $(".fa", this).removeClass("fa-check-square-o").addClass('fa-square-o');
+            } else {
+                //Check all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("check");
+                $(".fa", this).removeClass("fa-square-o").addClass('fa-check-square-o');
+            }
+            $(this).data("clicks", !clicks);
+        });
+    });
+    $.ajax({
+        type: 'GET',
+        url: "/api/historicalRecord/get",
+        contentType: 'application/json',
+        success:  function(date) {
+            option.series[0].data = date.report;
+            option.legend.data = date.caData;
+            myChart1.setOption(option, true);
+            option2.legend.data = date.coreName;
+            option2.xAxis[0].data = date.category;
+            option2.series = date.data;
+            myChart2.setOption(option2 , true);
+        }
+    });
+
+    var dom = document.getElementById("container");
+    var dom2 = document.getElementById("container2");
+    var myChart1 = echarts.init(dom);
+    var myChart2 = echarts.init(dom2);
+    option = {
+        tooltip : {
+            trigger: 'item',
+            formatter: "{a} <br/>{b} : {c} ({d}%)"
+        },
+        legend: {
+            orient: 'vertical',
+            left: '0%',
+            top:'10%',
+            data: []
+        },
+        series : [
+            {
+                name: '销售月季',
+                type: 'pie',
+                radius :  '70%',
+                center: ['50%', '55%'],
+                data:[],
+                itemStyle: {
+                    emphasis: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }
+        ]
+    };
+
+    option2 = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data:[]
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                name: '销量',
+                min: 0,
+                max: 30,
+                interval: 5,
+                axisLabel: {
+                    formatter: '{value} '
+                }
+            },
+
+        ],
+        series: []
+    };
+</script>
+</html>

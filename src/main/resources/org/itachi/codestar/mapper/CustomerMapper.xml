@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.itachi.codestar.mapper.CustomerMapper">
+
+
+
+
+    <resultMap id="customerResultMap" type="customer">
+        <id property="id" column="id"/>
+        <result property="name" column="name" javaType="string"/>
+        <result property="position" column="position" javaType="string"/>
+        <result property="phone" column="phone" javaType="string"/>
+        <result property="birthday" column="birthday" javaType="string"/>
+        <result property="gender" column="gender" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="companyArea" column="company_area" javaType="string"/>
+        <result property="companyPhone" column="company_phone" javaType="string"/>
+        <result property="companyFax" column="company_fax" javaType="string"/>
+        <result property="companyAddress" column="company_address" javaType="string"/>
+        <result property="companyLegal" column="company_legal" javaType="string"/>
+        <result property="companyLegalPhone" column="company_legal_phone" javaType="string"/>
+    </resultMap>
+
+    <select id="countCustomer" resultType="int">
+        select count(1) from customer a
+        where 1=1
+        <if test="companyName != null and companyName != ''">
+            and a.company_name like CONCAT('%',#{companyName},'%')
+        </if>
+    </select>
+
+    <select id="findCustomer" resultMap="customerResultMap" parameterType="map">
+        select * from customer a where 1=1
+        <if test="companyName != null and companyName != ''">
+            and a.company_name like CONCAT('%',#{companyName},'%')
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findCustomerList" resultType="org.itachi.codestar.domain.Customer">
+        select id, company_name as companyName from customer order by id desc
+    </select>
+
+
+    <select id="findUser" resultType="org.itachi.codestar.domain.UserPhone">
+      SELECT u.* FROM user_phone u
+       INNER JOIN customer c ON u.customer_id = c.id
+        WHERE u.customer_id = #{customerId}
+       ORDER BY u.id DESC
+       limit #{offset},#{rows}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,449 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:v-on="http://www.w3.org/1999/xhtml"
+      xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head th:replace="admin/common/head::head"></head>
+<body class="hold-transition skin-blue sidebar-mini">
+<div class="wrapper">
+    <th:block th:replace="admin/header::header"/>
+    <th:block th:replace="admin/menu::menu(1, 1)"/>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1>
+                代理服务管理系统
+                <small>Version 2.0</small>
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="javascript:void(0);"><i class="fa fa-server"></i> 服务管理</a></li>
+                <li class="active">缓存管理</li>
+            </ol>
+        </section>
+
+        <!-- Main content -->
+        <section class="content" id="app">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">缓存规则列表</h3>
+                    <div class="box-tools">
+                        <div class="input-group input-group-sm" style="width: 150px;">
+                            <input type="text" name="appName" class="form-control pull-right" placeholder="应用名称"/>
+                            <div class="input-group-btn">
+                                <button type="submit" class="btn btn-default" v-on:click="search(1);"><i class="fa fa-search"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <div class="mailbox-controls">
+                        <!-- Check all button -->
+                        <button type="button" class="btn btn-default btn-sm checkbox-toggle"><i class="fa fa-square-o"></i></button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default btn-sm" v-on:click="openCacheWindow(0,'新增缓存规则');"><i class="fa fa-plus"></i></button>
+                            <button type="button" class="btn btn-default btn-sm" v-on:click="deleteCaches();"><i class="fa fa-trash-o"></i></button>
+                        </div>
+                        <!-- /.btn-group -->
+                        <button type="button" class="btn btn-default btn-sm" v-on:click="search(1);"><i class="fa fa-refresh"></i></button>
+                        <div class="pull-right">
+                           {{start}} - {{end}} / {{total}}
+                            <!-- /.btn-group -->
+                        </div>
+                        <!-- /.pull-right -->
+                    </div>
+                    <div class="table-responsive mailbox-messages">
+                        <table class="table table-hover">
+                            <tr>
+                                <th></th>
+                                <th nowrap="true">服务名称</th>
+                                <th nowrap="true">缓存地址</th>
+                                <th nowrap="true">缓存时间</th>
+                                <th nowrap="true">是否按用户缓存</th>
+                                <th nowrap="true">操作</th>
+                            </tr>
+                            <tr v-for="item in caches">
+                                <td nowrap="true"><input type="checkbox" v-bind:value="item.id" /></td>
+                                <td nowrap="true">{{item.appName}}</td>
+                                <td nowrap="true">{{item.uri + item.path}}</td>
+                                <td nowrap="true">{{item.cacheTime}} 分钟</td>
+                                <td nowrap="true">{{item.byUser ? '是' : '否'}}</td>
+                                <td nowrap="true">
+                                    <a href="javascript:void(0);" v-on:click="openCacheWindow(item.id,'修改缓存规则');">修改</a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer clearfix">
+                    <ul class="pagination pagination-sm no-margin pull-right">
+                        <li><a href="javascript:void(0);" v-on:click="search(1);">&laquo;</a></li>
+                        <template v-for="item in size">
+                            <li v-if="item == page"><a href="javascript:void(0);">{{item}}</a></li>
+                            <!--/*-->
+                            <li v-else><a href="javascript:void(0);" v-on:click="search(item);">{{item}}</a></li>
+                            <!--*/-->
+                        </template>
+                        <li><a href="javascript:void(0);" v-on:click="search(size);">&raquo;</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- /.box -->
+            <div class="modal fade" id="cache-dialog" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <div class="box box-primary modal-content" style="width:850px">
+                        <div class="modal-header with-border">
+                            <h3 class="modal-title"></h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <input type="hidden" id="cacheId" v-model="cache.id" />
+                                <input type="hidden" id="serviceId" v-model="cache.serviceId" />
+                                <label for="serviceName">应用名称</label>
+                                <div class="input-group input-group-sm" style="width: 150px;">
+                                    <label id="serviceName">{{cache.appName}}</label>
+                                    <div class="input-group-btn">
+                                        <button type="submit" class="btn btn-default" v-on:click="selectServices(1);"><i class="fa fa-search"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="path">服务链接</label>
+                                <div class="row">
+                                    <div class="col-xs-12">
+                                        <label id="uri">{{cache.uri}}</label><input type="url" id="path" placeholder="服务链接" v-model="cache.path" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <label for="cacheTime">缓存时间</label>
+                                        <input type="number" id="cacheTime" placeholder="链接超时时间" v-model="cache.cacheTime" />分钟
+                                    </div>
+                                    <div class="col-xs-6 checkbox">
+                                        <label>
+                                            <input type="checkbox" id="byUser" v-bind:true-value="1" v-bind:false-value="0" v-model="cache.byUser" /> 按照用户缓存
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.box-body -->
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary" v-on:click="submitCache();">提交</button>
+                            <button type="submit" class="btn btn-default pull-right" v-on:click="closeCacheWindow();">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="services-dialog" tabindex="-2" role="dialog">
+                <div class="modal-dialog">
+                    <div class="box box-primary modal-content" style="width:700px">
+                        <div class="modal-header with-border">
+                            <h3 class="modal-title">选择服务</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="modal-body">
+                            <div class="box-tools">
+                                <div class="input-group input-group-sm" style="width: 150px;">
+                                    <input type="text" name="serviceName" class="form-control pull-right" placeholder="应用名称"/>
+                                    <div class="input-group-btn">
+                                        <button type="submit" class="btn btn-default" v-on:click="selectServices(1);"><i class="fa fa-search"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive mailbox-messages">
+                                <table class="table table-hover">
+                                    <tr>
+                                        <th></th>
+                                        <th nowrap="true">服务名称</th>
+                                        <th nowrap="true">服务地址</th>
+                                    </tr>
+                                    <tr v-for="item in services">
+                                        <td nowrap="true"><input type="radio" v-bind:value="item.id" name="appId" /></td>
+                                        <td nowrap="true">{{item.appName}}</td>
+                                        <td nowrap="true">{{item.url}}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="box-footer clearfix">
+                                <ul class="pagination pagination-sm no-margin pull-right">
+                                    <li><a href="javascript:void(0);" v-on:click="selectServices(1);">&laquo;</a></li>
+                                    <template v-for="item in service.size">
+                                        <li v-if="item == service.page"><a href="javascript:void(0);">{{item}}</a></li>
+                                        <!--/*-->
+                                        <li v-else><a href="javascript:void(0);" v-on:click="selectServices(item);">{{item}}</a></li>
+                                        <!--*/-->
+                                    </template>
+                                    <li><a href="javascript:void(0);" v-on:click="selectServices(service.size);">&raquo;</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- /.box-body -->
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary" v-on:click="chooseService();">确定</button>
+                            <button type="submit" class="btn btn-default pull-right" v-on:click="closeServicesWindow();">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <th:block th:replace="admin/footer::footer"/>
+</div>
+<!-- ./wrapper -->
+</body>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    $(function () {
+        var vue = new Vue({
+                el: "#app",
+                data: {
+                    total: 0,
+                    start: 0,
+                    end: 0,
+                    size: 0,
+                    page: 1,
+                    rows: 10,
+                    caches: [],
+                    pager: {},
+                    cache: {},
+                    dialog: {},
+                    services: [],
+                    servicesDialog: {},
+                    service: {
+                        total: 0,
+                        start: 0,
+                        end: 0,
+                        size: 0,
+                        page: 1,
+                        rows: 10
+                    }
+                },
+                methods: {
+                    search: function (index) {
+                        var size = Math.ceil(this.total / this.rows);
+                        if (!index) {
+                            index = 1;
+                        }
+                        if (index > size) {
+                            index = size;
+                        }
+                        if (index < 1) {
+                            index = 1;
+                        }
+                        this.page = index;
+                        var _self = this;
+                        var url = [[@{/api/admin/caches}]];
+                        $.get(url, {
+                            appName: $("input[name='appName']").val(),
+                            page: this.page,
+                            rows: this.rows
+                        }, function (datas) {
+                            if (datas && datas.caches) {
+                                // console.log(datas.caches);
+                                _self.caches = datas.caches;
+                                _self.total = datas.pager.total;
+                                _self.size = Math.ceil(_self.total / _self.rows);
+                                _self.start = (_self.page - 1) * _self.rows + 1;
+                                _self.end = Math.min(_self.total, _self.page * _self.rows);
+                            }
+                        }).error(function (XMLHttpRequest) {
+                            window.top.errorMessage(XMLHttpRequest);
+                        });
+                    },
+                    openCacheWindow: function (id, title) {
+                        this.dialog.find("h3.modal-title").html(title);
+                        this.cache = {id: 0};
+                        if (id > 0) {
+                            var caches_api_url = [[@{/api/admin/caches}]];
+                            var _self = this;
+                            $.get(caches_api_url + "/" + id, function (result) {
+                                if (result) {
+                                    _self.cache = result;
+                                    $("#serviceName").html(result.appName);
+                                    $("#uri").html(result.uri);
+                                }
+                            }).error(function (XMLHttpRequest) {
+                                window.top.errorMessage(XMLHttpRequest);
+                            });
+                        }
+                        this.dialog.modal("show");
+                    },
+                    initDialog: function () {
+                        this.dialog = $('#cache-dialog').modal({
+                            backdrop: false,
+                            keyboard: false,
+                            show: false
+                        });
+                        this.servicesDialog = $('#services-dialog').modal({
+                            backdrop: false,
+                            keyboard: false,
+                            show: false
+                        });
+                        this.dialog.modal("hide");
+                        this.servicesDialog.modal("hide");
+                    },
+                    closeCacheWindow: function () {
+                        $("#serviceId").val("0");
+                        $("#serviceName").html("");
+                        $("#uri").html("");
+                        $("#path").val("");
+                        $("#cacheTime").val("");
+                        this.dialog.modal("hide");
+                    },
+                    submitCache: function () {
+                        var method = this.cache.id > 0 ? "PUT" : "POST";
+                        var caches_api_url = [[@{/api/admin/caches}]];
+                        var _self = this;
+                        $.ajax({
+                            url : caches_api_url,
+                            type: method,
+                            data: JSON.stringify(this.cache),
+                            contentType: 'application/json',
+                            success: function() {
+                                _self.closeCacheWindow();
+                                _self.search(_self.page);
+                                var message = "添加成功";
+                                if (_self.cache.id > 0) {
+                                    message = "更新成功";
+                                }
+                                layer.alert(message, {title: '操作提示', icon: 1});
+                                //$.messager.alert('操作提示', message, 'info');
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    // console.log(XMLHttpRequest.responseJSON.code);
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                } else {
+                                    var message = "添加失败";
+                                    if (id > 0) {
+                                        message = "更新失败";
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 2});
+                                }
+                            }
+                        });
+                    },
+                    deleteCaches: function () {
+                        var ids = [];
+                        $(".mailbox-messages input:checked").each(function () {
+                            ids.push($(this).val());
+                        });
+                        var caches_api_url = [[@{/api/admin/caches}]];
+                        var _self = this;
+                        $.ajax({
+                            url : caches_api_url,
+                            type: 'DELETE',
+                            data: JSON.stringify(ids),
+                            contentType: 'application/json',
+                            success: function() {
+                                layer.alert('删除成功', {title: '操作提示', icon: 1});
+                                var clicks = $(".checkbox-toggle").data('clicks');
+                                if (clicks) {
+                                    $(".checkbox-toggle").click();
+                                }
+                                _self.search(_self.page);
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    // console.log(XMLHttpRequest.responseJSON.code);
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                } else {
+                                    layer.alert('删除失败', {title: '操作提示', icon: 2});
+                                }
+                            }
+                        });
+                    },
+                    selectServices:function (index) {
+                        var size = Math.ceil(this.total / this.rows);
+                        if (!index) {
+                            index = 1;
+                        }
+                        if (index > size) {
+                            index = size;
+                        }
+                        if (index < 1) {
+                            index = 1;
+                        }
+                        this.service.page = index;
+                        var _self = this;
+                        var url = [[@{/api/admin/services}]];
+                        $.get(url, {
+                            appName: $("input[name='serviceName']").val(),
+                            page: this.service.page,
+                            rows: this.service.rows
+                        }, function (datas) {
+                            if (datas && datas.services) {
+                                // console.log(datas.services);
+                                _self.services = datas.services;
+                                _self.service.total = datas.pager.total;
+                                _self.service.size = Math.ceil(_self.total / _self.rows);
+                                _self.service.start = (_self.page - 1) * _self.rows + 1;
+                                _self.service.end = Math.min(_self.total, _self.page * _self.rows);
+                            }
+                        }).error(function (XMLHttpRequest) {
+                            window.top.errorMessage(XMLHttpRequest);
+                        });
+                        $("input[name='appId']:radio").prop("checked", false);
+                        this.servicesDialog.modal("show");
+                    },
+                    chooseService:function() {
+                        var radio = $("input[name='appId']:checked");
+                        if (radio && radio.length > 0) {
+                            this.cache.serviceId = radio.val();
+                            this.cache.appName = radio.parent("td").next("td").html();
+                            $("#serviceName").html(this.cache.appName);
+                            this.cache.uri = radio.parent("td").next("td").next("td").html();
+                            $("#uri").html(this.cache.uri);
+                        }
+                        this.servicesDialog.modal("hide");
+                    },
+                    closeServicesWindow:function() {
+                        this.servicesDialog.modal("hide");
+                    }
+                }
+            });
+
+        vue.initDialog();
+        vue.search(1);
+
+        $(".checkbox-toggle").click(function () {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                //Uncheck all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                $(".fa", this).removeClass("fa-check-square-o").addClass('fa-square-o');
+            } else {
+                //Check all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("check");
+                $(".fa", this).removeClass("fa-square-o").addClass('fa-check-square-o');
+            }
+            $(this).data("clicks", !clicks);
+        });
+    });
+    /*]]>*/
+</script>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:v-on="http://www.w3.org/1999/xhtml"
+      xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head th:replace="common/head::head"></head>
+<body class="hold-transition skin-blue sidebar-mini">
+<div class="wrapper">
+    <th:block th:replace="header::header"/>
+    <th:block th:replace="menu::menu(1, 1)"/>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1 th:replace="common/name::content"></h1>
+            <!--<ol class="breadcrumb">
+                <li><a href="javascript:void(0);"><i class="fa fa-server"></i> 设备调试</a></li>
+                <li class="active">设备调试</li>
+            </ol>-->
+        </section>
+
+        <!-- Main content -->
+        <section class="content" id="app">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">装车发货</h3>
+
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <div class="mailbox-controls">
+                        <form class="form-inline" role="form">
+                        <div class="box-tools">
+                            <div class="input-group input-group-sm">
+                                <label>装车编号： </label>
+                                <input type="text" name="loadingNumber" class="form-inline" v-model="loadingNumber" readonly="readonly" />
+                            </div>
+                            <!--<div class="input-group input-group-sm">
+                                <label>装车时间： </label>
+                                <input type="date" name="loadingTime" class="form-inline" v-model="entruckings.loadingTime"/>
+                            </div>-->
+                        </div>
+                        </form>
+                    </div>
+                    <div class="btn-group">
+                    </div>
+                    <div class="table-responsive mailbox-messages">
+                        <table class="table table-hover">
+                            <tr>
+                                <th></th>
+                                <th nowrap="true">订单编号</th>
+                                <th nowrap="true">客户名称</th>
+                                <th nowrap="true">客户代号</th>
+                                <th nowrap="true">设备编号</th>
+                                <th nowrap="true">设备名称</th>
+                            </tr>
+                            <tr v-for="item in entruckings">
+                                <td nowrap="true"><!--<input type="checkbox" v-bind:value="item.id" />--></td>
+                                <td nowrap="true">{{item.orderNumber}}</td>
+                                <td nowrap="true">{{item.companyName}}</td>
+                                <td nowrap="true">{{item.companyCode}}</td>
+                                <td nowrap="true">{{item.planCode}} </td>
+                                <td nowrap="true">{{item.deviceName}} </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="box-footer clearfix">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-sm" style="background:#ffa430" v-on:click="openDetailedWindow();" ><span style="color:#000000;">确&nbsp;&nbsp;定</span></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <th:block th:replace="footer::footer"/>
+</div>
+<!-- ./wrapper -->
+</body>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    $(function () {
+        var vue = new Vue({
+            el: "#app",
+            data: {
+                total: 0,
+                start: 0,
+                end: 0,
+                size: 0,
+                page: 1,
+                rows: 10,
+                entruckings: [],
+                customers:[],
+                pager: {},
+                loadingNumber:0,
+                entrucking: [],
+                dialog: {}
+            },
+           methods: {
+                openDetailedWindow:function(){
+                       var _self = this;
+                        var api_url = [[@{/api/entrucking/loadingNumber}]];
+                         $.ajax({
+                             url : api_url + "/" + _self.loadingNumber,
+                             type: 'PUT',
+                            success: function(data) {
+                                window.location.href = "/device"
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    // console.log(XMLHttpRequest.responseJSON.code);
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                }
+                            }
+                        });
+                },
+                search: function (index) {
+                    var size = Math.ceil(this.total / this.rows);
+                    if (!index) {
+                        index = 1;
+                    }
+                    if (index > size) {
+                        index = size;
+                    }
+                    if (index < 1) {
+                        index = 1;
+                    }
+                    this.page = index;
+                    var _self = this;
+                    if(_self.loadingNumber==0){
+                    var loadingNumber = _self.handleDate("loadingNumber");
+                        _self.loadingNumber = loadingNumber;
+                    }
+                    var url = [[@{/api/entrucking}]];
+                    $.get(url, {
+                        loadingNumber:  _self.loadingNumber,
+                        page: this.page,
+                        rows: this.rows
+                    }, function (datas) {
+                        if (datas && datas.entruckings) {
+                            // console.log(datas.services);
+                            _self.entruckings = datas.entruckings;
+                            $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                            var clicks = $(".checkbox-toggle").data('clicks');
+                            if (clicks) {
+                                $(".checkbox-toggle").click();
+                            }
+                            _self.total = datas.pager.total;
+                            _self.size = Math.ceil(_self.total / _self.rows);
+                            _self.start = (_self.page - 1) * _self.rows + 1;
+                            _self.end = Math.min(_self.total, _self.page * _self.rows);
+                        }
+                    }).error(function (XMLHttpRequest) {
+                        window.top.errorMessage(XMLHttpRequest);
+                    });
+                },
+                handleDate:function (name) {
+                    var reg = new RegExp("(^|&|\\?)"+ name +"=([^&]*)(&|$)"), r;
+                    if (r= location.search.match(reg)) return unescape(r[2]);
+                    return null;
+                },
+                openServiceWindow: function (id, title) {
+                    if(id > 0){
+                        $("#orderNumber_").hide();
+                    } else {
+                        $("#orderNumber_").show();
+                    }
+                    this.dialog.find("h3.modal-title").html(title);
+                    if (id > 0) {
+                        var services_api_url = [[@{/api/entrucking}]];
+                        var _self = this;
+                        $.get(services_api_url + "/" + id, function (result) {
+                            if (result) {
+                                _self.entrucking = result;
+                            }
+                        }).error(function (XMLHttpRequest) {
+                            window.top.errorMessage(XMLHttpRequest);
+                        });
+                    } else {
+                        this.entrucking = {id: 0};
+                        $("#needHeaders").prop("checked", true);
+                    }
+                    this.dialog.modal("show");
+                },
+                initDialog: function () {
+                    this.dialog = $('#service-dialog').modal({
+                        backdrop: false,
+                        keyboard: false,
+                        show: false
+                    });
+                    // $("div.ui-dialog-titlebar").hide();
+                    this.dialog.modal("hide");
+                },
+
+                closeServiceWindow: function () {
+                    this.dialog.modal("hide");
+                },
+                submitService: function () {
+                    var method = this.entrucking.id > 0 ? "PUT" : "POST";
+                    var services_api_url = [[@{/api/entrucking}]];
+                    var _self = this;
+                    $.ajax({
+                        url : services_api_url,
+                        type: method,
+                        data: JSON.stringify(this.entrucking),
+                        contentType: 'application/json',
+                        success: function() {
+                            _self.closeServiceWindow();
+                            _self.search(_self.page);
+                            var message = "添加成功";
+                            if (_self.entrucking.id > 0) {
+                                message = "更新成功";
+                            }
+                            layer.alert(message, {title: '操作提示', icon: 1});
+                            //$.messager.alert('操作提示', message, 'info');
+                        },
+                        error: function (XMLHttpRequest) {
+                            if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                // console.log(XMLHttpRequest.responseJSON.code);
+                                var message = XMLHttpRequest.responseJSON.message;
+                                var errors = XMLHttpRequest.responseJSON.errors;
+                                if (errors && errors.length > 0) {
+                                    $.each(errors, function (i, error) {
+                                        if (error && error.message) {
+                                            message += "<br />" + error.message;
+                                        }
+                                    });
+                                }
+                                layer.alert(message, {title: '操作提示', icon: 0});
+                            } else {
+                                var message = "添加失败";
+                                if (id > 0) {
+                                    message = "更新失败";
+                                }
+                                layer.alert(message, {title: '操作提示', icon: 2});
+                            }
+                        }
+                    });
+                },
+                deleteServices: function () {
+                    var ids = [];
+                    $(".mailbox-messages input:checked").each(function () {
+                        ids.push($(this).val());
+                    });
+                    var services_api_url = [[@{/api/entrucking}]];
+                    var _self = this;
+                    $.ajax({
+                        url : services_api_url,
+                        type: 'DELETE',
+                        data: JSON.stringify(ids),
+                        contentType: 'application/json',
+                        success: function() {
+                            layer.alert('删除成功', {title: '操作提示', icon: 1});
+                            var clicks = $(".checkbox-toggle").data('clicks');
+                            if (clicks) {
+                                $(".checkbox-toggle").click();
+                            }
+                            _self.search(_self.page);
+                        },
+                        error: function (XMLHttpRequest) {
+                            if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                // console.log(XMLHttpRequest.responseJSON.code);
+                                var message = XMLHttpRequest.responseJSON.message;
+                                var errors = XMLHttpRequest.responseJSON.errors;
+                                if (errors && errors.length > 0) {
+                                    $.each(errors, function (i, error) {
+                                        if (error && error.message) {
+                                            message += "<br />" + error.message;
+                                        }
+                                    });
+                                }
+                                layer.alert(message, {title: '操作提示', icon: 0});
+                            } else {
+                                layer.alert('删除失败', {title: '操作提示', icon: 2});
+                            }
+                        }
+                    });
+                },
+                cleanCache: function (appId, appName) {
+                    layer.confirm('你确定要删除应用[' + appName + ']的所有缓存？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(){
+                        var services_api_url = [[@{/api/admin/caches}]];
+                        // var _self = this;
+                        $.ajax({
+                            url : services_api_url + "/" + appId,
+                            type: 'DELETE',
+                            success: function() {
+                                layer.alert('清除应用缓存成功', {title: '操作提示', icon: 1});
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    // console.log(XMLHttpRequest.responseJSON.code);
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                } else {
+                                    layer.alert('清除应用缓存失败', {title: '操作提示', icon: 2});
+                                }
+                            }
+                        });
+                    }, function(){
+                    });
+                }
+            }
+        });
+
+        vue.initDialog();
+        vue.search(1);
+
+        $(".checkbox-toggle").click(function () {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                //Uncheck all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                $(".fa", this).removeClass("fa-check-square-o").addClass('fa-square-o');
+            } else {
+                //Check all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("check");
+                $(".fa", this).removeClass("fa-square-o").addClass('fa-check-square-o');
+            }
+            $(this).data("clicks", !clicks);
+        });
+    });
+    /*]]>*/
+</script>
+</html>

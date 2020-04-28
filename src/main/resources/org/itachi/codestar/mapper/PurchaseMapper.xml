@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.itachi.codestar.mapper.PurchaseMapper">
+
+    <resultMap id="plannedResultMap" type="OrderPlanned">
+    <id property="id" column="id"/>
+    <result property="purchaseCode" column="purchase_code" javaType="String"/>
+    <result property="partId" column="part_id" javaType="long"/>
+    <result property="planId" column="plan_id" javaType="long"/>
+    <result property="purchaseCount" column="purchase_count" javaType="int"/>
+    <result property="purchaseStatus" column="purchase_status" javaType="string"/>
+    <result property="partCode" column="part_code" javaType="string"/>
+    <result property="partName" column="part_name" javaType="string"/>
+    <result property="partBrand" column="part_brand" javaType="string"/>
+    <result property="ruleModel" column="rule_model" javaType="string"/>
+    <result property="numberParts" column="number_parts" javaType="string"/>
+    <result property="partSource" column="part_source" javaType="string"/>
+    <result property="pluckStatus" column="pluck_status" javaType="int"/>
+    <result property="intStatus" column="int_status" javaType="int"/>
+   </resultMap>
+
+    <resultMap id="purchaseResultMap" type="Purchase">
+        <id property="id" column="id"/>
+        <result property="planNumber" column="plan_number" javaType="String"/>
+        <result property="purchaseCode" column="purchase_code" javaType="String"/>
+        <result property="planTime" column="plan_time" javaType="String"/>
+        <result property="orderUpdateTime" column="order_update_time" javaType="string"/>
+        <result property="orderStatus" column="order_status" javaType="string"/>
+        <result property="isStatus" column="is_status" javaType="string"/>
+        <result property="orderProgress" column="orderProgress" javaType="int"/>
+    </resultMap>
+
+    <resultMap id="purchaseManageResultMap" type="PurchaseManage">
+        <id property="id" column="id"/>
+        <result property="purchaseCode" column="purchase_code" javaType="String"/>
+        <result property="planTime" column="plan_time" javaType="String"/>
+        <result property="expectDate" column="expect_date" javaType="String"/>
+        <result property="orderUpdateTime" column="order_update_time" javaType="string"/>
+        <result property="orderStatus" column="order_status" javaType="string"/>
+        <result property="isStatus" column="is_status" javaType="int"/>
+        <result property="orderProgress" column="orderProgress" javaType="int"/>
+    </resultMap>
+
+    <resultMap id="purchasePartsResultMap" type="PurchaseParts">
+        <id property="id" column="id"/>
+        <result property="purchaseCode" column="purchase_code" javaType="String"/>
+        <result property="partId" column="part_id" javaType="long"/>
+        <result property="planId" column="plan_id" javaType="long"/>
+        <result property="purchaseCount" column="purchase_count" javaType="int"/>
+        <result property="purchaseStatus" column="purchase_status" javaType="string"/>
+        <result property="partCode" column="part_code" javaType="string"/>
+        <result property="partName" column="part_name" javaType="string"/>
+        <result property="partBrand" column="part_brand" javaType="string"/>
+        <result property="ruleModel" column="rule_model" javaType="string"/>
+        <result property="numberParts" column="number_parts" javaType="string"/>
+        <result property="partSource" column="part_source" javaType="string"/>
+        <result property="intStatus" column="int_status" javaType="int"/>
+        <result property="partSupplier" column="part_supplier" javaType="string"/>
+        <result property="partPrice" column="part_price" javaType="string"/>
+    </resultMap>
+
+    <select id="findPurchaseNumber" resultType="Integer">
+        select max(a.increment) from purchase a where a.create_time = #{0}
+    </select>
+
+    <select id="findPurchaseNumberG" resultType="Integer">
+        select max(a.increment) from purchase_manage a where date_format(a.create_time ,"%Y-%m-%d") = date_format(sysdate(),"%Y-%m-%d")
+    </select>
+
+    <select id="findOrderPlanned" resultMap="plannedResultMap" parameterType="map">
+        select a.*,c.part_code,c.part_name,c.part_brand,c.remarks,c.part_source,c.number_parts from order_planned a left join part_configuration c on a.part_id=c.id
+        where a.deleted = 0
+        <if test="purchaseStatus != null">
+            and a.purchase_status =#{purchaseStatus}
+        </if>
+        <if test="pluckStatus != null and pluckStatus > 0">
+            and a.pluck_status =#{pluckStatus}
+        </if>
+        <if test="planId != null">
+            and a.plan_id =#{planId}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findOrderPlannedDetail" resultMap="purchasePartsResultMap" parameterType="map">
+        select a.*,c.part_code,c.part_name,c.part_brand,c.remarks,c.part_source,c.number_parts,c.part_supplier,c.part_price from purchase_parts a left join part_configuration c on a.part_id=c.id
+        where a.deleted = 0
+        <if test="purchaseStatus != null and purchaseStatus > 0">
+            and a.purchase_status =#{purchaseStatus}
+        </if>
+        <if test="intStatus != null and intStatus > 0">
+            and a.int_status =#{intStatus}
+        </if>
+        <if test="planId != null">
+            and a.plan_id =#{planId}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+    <update id="updatePurchase">
+       update order_planned set purchase_status = 1,pluck_status = 1
+        where id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+           #{items}
+        </foreach>
+    </update>
+   <update id="updatePurchasePart">
+       update purchase_parts set purchase_status = 1
+       where id in
+       <foreach collection="list" item="items" open="(" separator="," close=")">
+           #{items}
+       </foreach>
+   </update>
+
+    <update id="updatePurchasePlanId">
+        update purchase_parts set purchase_status = 1
+        where plan_id = #{0}
+    </update>
+
+    <update id="updateOrderPlanned">
+        update purchase a set a.order_status = 1
+        where a.id = #{0}
+    </update>
+
+    <update id="updatePurchaseManage">
+        update purchase_manage a set a.order_status = 1
+        where a.id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+
+    <update id="updateIsStatus">
+        update purchase_manage a set a.is_status = 1 ,order_update_time = sysdate()
+        where a.id = #{0}
+    </update>
+
+    <select id="findPurchases" resultMap="purchaseResultMap" parameterType="map">
+       select a.*,
+        ((select count(1) from  order_planned k where k.plan_Id  = a.id and k.pluck_status = 1 )* 100/(select  case when count(1) = 0 then 1 else count(1) end from  order_planned k where k.plan_Id  = a.id )) as orderProgress
+        from purchase a
+        where a.deleted = 0
+        <if test="orderStatus != null and orderStatus.length() > 0">
+            and a.order_status =#{orderStatus}
+        </if>
+        <if test="planNumber != null and planNumber.length() > 0">
+           and a.plan_number =#{planNumber}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findPurchasesManage" resultMap="purchaseManageResultMap" parameterType="map">
+        select a.*,
+        ((select count(1) from  purchase_parts k where k.plan_Id  = a.id and k.purchase_status = 1 )* 100/(select  case when count(1) = 0 then 1 else count(1) end from  purchase_parts k where k.plan_Id  = a.id )) as orderProgress
+        from purchase_manage a
+        where a.deleted = 0
+        <if test="purchaseCode != null and purchaseCode.length() > 0">
+            and a.purchase_code =#{purchaseCode}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findPurchasesIn" resultMap="purchaseManageResultMap" parameterType="map">
+        select a.*,
+        ((select count(1) from  purchase_parts k where k.plan_Id  = a.id and k.int_status = 1 )* 100/(select  case when count(1) = 0 then 1 else count(1) end from  purchase_parts k where k.plan_Id  = a.id )) as orderProgress
+        from purchase_manage a
+        where a.deleted = 0
+        <if test="orderStatus != null and orderStatus.length() > 0">
+            and a.order_status =#{orderStatus}
+        </if>
+        <if test="purchaseCode != null and purchaseCode.length() > 0">
+            and a.purchase_code =#{purchaseCode}
+        </if>
+        <if test="isStatus != null and isStatus != ''">
+            and is_status = #{isStatus}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="countPurchasesIn" resultType="int">
+        select count(1) from purchase_manage where 1=1
+        <if test="isStatus != null and isStatus != ''">
+            and is_status = #{isStatus}
+        </if>
+    </select>
+    <delete id="deleteByPlanDeviceId">
+        delete from planned_scheduling where plan_device_id = #{0}
+    </delete>
+</mapper>

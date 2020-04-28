@@ -1,0 +1,378 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:v-on="http://www.w3.org/1999/xhtml"
+      xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head th:replace="common/head::head"></head>
+<body class="hold-transition skin-blue sidebar-mini">
+<script type="text/javascript" th:src="@{/scripts/js/laydate.js}"></script>
+<script type="text/javascript" th:src="@{/scripts/js/jquery.form.min.js}"></script>
+<div class="wrapper">
+    <th:block th:replace="header::header"/>
+    <th:block th:replace="menu::menu(8, 2)"/>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1 th:replace="common/name::content"></h1>
+            <ol class="breadcrumb">
+                <li><a href="javascript:void(0);"><i class="fa fa-server"></i> 维修管理</a></li>
+                <li class="active">维修明细</li>
+            </ol>
+        </section>
+        <!-- Main content -->
+        <section class="content" id="app">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">维修明细</h3>
+                    <div class="box-tools">
+                        <div class="input-group input-group-sm">
+                            <!--<input type="text" name="partName" class="form-control pull-right"-->
+                                   <!--placeholder="零件编号"/>-->
+                            <!--<select  placeholder="类型" id="status" class="form-control pull-right">
+                                <option v-for="item in items"  class="form-control"  v-bind:value="item.value">{{item.text}}</option>
+                            </select>
+                            <div class="input-group-btn">
+                                <button type="submit" class="btn btn-default" v-on:click="search(1);"><i class="fa fa-search"></i></button>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <div class="mailbox-controls">
+                        <button type="button" class="btn btn-default btn-sm checkbox-toggle"><i class="fa fa-square-o"></i></button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default btn-sm" v-on:click="openDeviceStandWindow(0,'添加维修记录');"><i class="fa fa-plus"></i></button>
+                            <button type="button" class="btn btn-default btn-sm" v-on:click="deleteProcurement();"><i class="fa fa-trash-o"></i></button>
+                        </div>
+                        <!-- /.btn-group -->
+                        <button type="button" class="btn btn-default btn-sm" v-on:click="search(1);"><i class="fa fa-refresh"></i></button>
+                        <div class="pull-right">
+                            {{start}} - {{end}} / {{total}}
+                            <!-- /.btn-group -->
+                        </div>
+                        <!-- /.pull-right -->
+                    </div>
+                    <div class="table-responsive mailbox-messages">
+                        <table class="table table-hover">
+                            <tr>
+                                <th></th>
+                                <th nowrap="true">维修人</th>
+                                <th nowrap="true">是否过保</th>
+                                <th nowrap="true">维修费用</th>
+                                <th nowrap="true">维修时间</th>
+                                <th nowrap="true">维修单据</th>
+                                <th nowrap="true">操作</th>
+                            </tr>
+                            <tr v-for="item in repairManages">
+                                <td nowrap="true"><input type="checkbox" v-bind:value="item.id" /></td>
+                                <td nowrap="true">{{item.uploadPeople}}</td>
+                                <td nowrap="true">{{item.beOverdue}}</td>
+                                <td nowrap="true">{{item.repairPrice}}</td>
+                                <td nowrap="true">{{item.repairTime}} </td>
+                                <td nowrap="true"><img v-if="item.repairImage != null"v-bind:src="item.repairImage" width="40"height="40"/></td>
+                                <td nowrap="true">
+                                    <a href="javascript:void(0);" v-on:click="openDeviceStandWindow(item.id,'维修记录修改');">修改</a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- /.box-body -->
+                <div class="box-footer clearfix">
+                    <div class="btn-group">
+                        <a th:href="@{/repair}"><button type="submit" class="btn btn-default pull-right">返回</a>
+                    </div>
+                    <ul class="pagination pagination-sm no-margin pull-right">
+                        <li><a href="javascript:void(0);" v-on:click="search(1);">&laquo;</a></li>
+                        <li v-for="item in size" v-if="item == page"><a href="javascript:void(0);">{{item}}</a></li>
+                        <li v-else="v-else"><a href="javascript:void(0);" v-on:click="search(item);">{{item}}</a></li>
+                        <li><a href="javascript:void(0);" v-on:click="search(size);">&raquo;</a></li>
+                    </ul>
+                </div>
+                <div class="modal fade" id="service-dialog" tabindex="-1" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="box box-primary modal-content">
+                            <div class="modal-header with-border">
+                                <h3 class="modal-title"></h3>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label class="col-sm-3  control-label"for="uploadPeople">维修人</label>
+                                    <input type="text" class="form-control" id="uploadPeople" v-model="repairManage.uploadPeople" style="display:inline-block;width:404px;"/>
+                                </div>
+                                <div class="form-group">
+                                <label class="col-sm-3  control-label"for="repairTime">维修时间</label>
+                                <input type="date" class="form-control" id="repairTime"  v-model="repairManage.repairTime" style="display: inline-block;width:404px;"/>
+                            </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label"for="beOverdue">是否过保</label>
+                                    <input type="text" class="form-control" disabled="disabled" id="beOverdue"  v-model="repairManage.beOverdue" style="display: inline-block;width:404px;"/>
+                                   <!-- <select id="beOverdue" readonly="readonly" class="select"style="width: 403px; background-color: #EEEEEE;" disabled="disabled"v-model="repairManage.beOverdue">
+                                        <option value="是">是</option>
+                                        <option value="否">否</option>
+                                    </select>-->
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3  control-label"for="repairPrice">维修费用</label>
+                                    <input type="text" class="form-control" placeholder="0"id="repairPrice"  v-model="repairManage.repairPrice" style="display: inline-block; width: 375px;"/>
+                                    <span style="font-weight: bold;">RMB</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3  control-label"for="repairImage">维修单据</label>
+                                    <img th:src="@{/scripts/dist/img/image.jpg}" id="image" alt="image"width="100"height="100"/>
+                                    <input type="hidden" id="repairImage" v-model = "repairManage.repairImage" />
+                                    <form enctype="multipart/form-data" method="post" th:action="@{/upload-file}" id="form">
+                                        <div >
+                                        <span id="fileDiv">
+                                             <input type='file' class="col-sm-9 input-Image" name="file" id="file" v-on:change="uploadFile();"style="float:left;width: 77px;margin-left:129px"/>
+                                        </span>
+
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- /.box-body -->
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary" v-on:click="submitService();">提交</button>
+                                <button type="submit" class="btn btn-default pull-right" v-on:click="closeStandardWindow();">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <th:block th:replace="footer::footer"/>
+</div>
+<!-- ./wrapper -->
+</body>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    var rr =new Date().getTime()
+    $(function () {
+        var vue = new Vue({
+                el: "#app",
+                data: {
+                    total: 0,
+                    start: 0,
+                    end: 0,
+                    size: 0,
+                    page: 1,
+                    rows: 10,
+                    loadingId:0,
+                    repairManages:[],
+                    items:[{text:'全部',value:'3'},{text:'入库',value:'1'},{text:'出库',value:'0'}],
+                    repairManage:{},
+                    pager: {},
+                    dialog: {}
+                },
+                methods: {
+                    search: function (index) {
+                        var size = Math.ceil(this.total / this.rows);
+                        if (!index) {
+                            index = 1;
+                        }
+                        if (index > size) {
+                            index = size;
+                        }
+                        if (index < 1) {
+                            index = 1;
+                        }
+                        this.page = index;
+                        var _self = this;
+                        if(_self.loadingId==0){
+                            _self.loadingId= _self.handleDate("id");
+                        }
+                        var url = [[@{/api/repairManage/detailed}]];
+                        $.get(url, {
+                            loadingId: _self.loadingId,
+                            page: this.page,
+                            rows: this.rows
+                        }, function (datas) {
+                            if (datas && datas.repairManages) {
+                                _self.repairManages = datas.repairManages;
+                                _self.total = datas.pager.total;
+                                _self.size = Math.ceil(_self.total / _self.rows);
+                                _self.start = (_self.page - 1) * _self.rows + 1;
+                                _self.end = Math.min(_self.total, _self.page * _self.rows);
+                            }
+                        }).error(function (XMLHttpRequest) {
+                            window.top.errorMessage(XMLHttpRequest);
+                        });
+                    },
+                    handleDate:function (name) {
+                        var reg = new RegExp("(^|&|\\?)"+ name +"=([^&]*)(&|$)"), r;
+                        if (r= location.search.match(reg)) return unescape(r[2]);
+                        return null;
+                    },
+                    initDialog: function () {
+                        this.dialog = $('#service-dialog').modal({
+                            backdrop: false,
+                            keyboard: false,
+                            show: false
+                        });
+                        this.dialog.modal("hide");
+                    },
+                    //图片上传
+                    uploadFile:function () {
+                        var _sfle = this;
+                        var upload_url = [[@{/upload-file}]];
+                            var ajaxFormt = {
+                                url: upload_url,
+                                type: 'post',
+                                dateType: 'text',
+                                cache: false,
+                                success: function (tempPath) {
+                                    var json = $.parseJSON(tempPath);
+                                    $("#image").attr("src", json.src);
+                                    _sfle.repairManage.repairImage = json.path;
+                                },
+                                error: function (XMLHttpRequest) {
+                                    if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                        var message = XMLHttpRequest.responseJSON.message;
+                                        var errors = XMLHttpRequest.responseJSON.errors;
+                                        if (errors && errors.length > 0) {
+                                            $.each(errors, function (i, error) {
+                                                if (error && error.message) {
+                                                    message += "<br />" + error.message;
+                                                }
+                                            });
+                                        }
+                                        layer.alert(message, {title: '操作提示', icon: 0});
+                                    } else {
+                                        layer.alert('上传失败', {title: '操作提示', icon: 2});
+                                    }
+                                }
+                            };
+                            $("#form").ajaxForm(ajaxFormt);
+                            $("#form").submit(function () {
+                                $(this).ajaxSubmit();
+                                return false;
+                            });
+                            $("#form").submit()
+                     },
+                        submitService:function () {
+                            var price = /^[1-9]\d*$/;
+                            if(!price.test(this.repairManage.repairPrice)){
+                                layer.alert('维修费用必须为整数', {title: '操作提示', icon: 2});
+                                return false;
+                            }
+                            var _selfDS = this;
+                            _selfDS.repairManage.loadingId = _selfDS.loadingId;
+                            var methodDS = _selfDS.repairManage.id > 0 ? "PUT" : "POST";
+                            var services_api_urlDS = [[@{/api/repairManage}]];
+                            $.ajax({
+                                url : services_api_urlDS,
+                                type: methodDS,
+                                data: JSON.stringify(_selfDS.repairManage),
+                                contentType: 'application/json',
+                                success: function(data) {
+                                    _selfDS.search();
+                                    _selfDS.closeStandardWindow();
+                                    var message = "添加成功";
+                                    if (_selfDS.repairManage.id > 0) {
+                                        message = "更新成功";
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 1});
+                                },
+                                error: function (XMLHttpRequest) {
+                                    if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                        // console.log(XMLHttpRequest.responseJSON.code);
+                                        var message = XMLHttpRequest.responseJSON.message;
+                                        var errors = XMLHttpRequest.responseJSON.errors;
+                                        if (errors && errors.length > 0) {
+                                            $.each(errors, function (i, error) {
+                                                if (error && error.message) {
+                                                    message += "<br />" + error.message;
+                                                }
+                                            });
+                                        }
+                                        layer.alert(message, {title: '操作提示', icon: 0});
+                                    }
+                                }
+                            });
+                        },
+                    closeStandardWindow:function () {
+                        location.reload();
+                        this.dialog.modal("hide");
+                    },
+                    openDeviceStandWindow:function (id,title) {
+                        this.dialog.find("h3.modal-title").html(title);
+                        var _self = this;
+                        if (id > 0 || _self.loadingId >0) {
+                            var services_api_url = [[@{/api/repairManage}]];
+                            $.get(services_api_url + "/" + id + "/"+_self.loadingId, function (result) {
+                                if (result) {
+                                    _self.repairManage = result;
+                                    $("#image").attr("src", result.repairImage);
+                                }
+                            }).error(function (XMLHttpRequest) {
+                                window.top.errorMessage(XMLHttpRequest);
+                            });
+                        }
+                        this.dialog.modal("show");
+                    },
+                    deleteProcurement: function () {
+                        var ids = [];
+                        $(".mailbox-messages input:checked").each(function () {
+                            ids.push($(this).val());
+                        });
+                         if(ids.length<= 0){
+                            layer.alert('请勾选要删除的项', {title: '操作提示', icon: 2});
+                            return;
+                           }
+                            var _self = this;
+                            var services_api_url = [[@{/api/repairManage}]];
+                            $.ajax({
+                                url : services_api_url,
+                                type: 'DELETE',
+                                data: JSON.stringify(ids),
+                                contentType: 'application/json',
+                                success: function() {
+                                    layer.alert('删除成功', {title: '操作提示', icon: 1});
+                                    _self.search();
+                                },
+                                error: function (XMLHttpRequest) {
+                                    if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                        // console.log(XMLHttpRequest.responseJSON.code);
+                                        var message = XMLHttpRequest.responseJSON.message;
+                                        var errors = XMLHttpRequest.responseJSON.errors;
+                                        if (errors && errors.length > 0) {
+                                            $.each(errors, function (i, error) {
+                                                if (error && error.message) {
+                                                    message += "<br />" + error.message;
+                                                }
+                                            });
+                                        }
+                                        layer.alert(message, {title: '操作提示', icon: 0});
+                                    }
+                                }
+                            });
+                     }
+                }
+            });
+
+        vue.initDialog();
+        vue.search(1);
+
+        $(".checkbox-toggle").click(function () {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                //Uncheck all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                $(".fa", this).removeClass("fa-check-square-o").addClass('fa-square-o');
+            } else {
+                //Check all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("check");
+                $(".fa", this).removeClass("fa-square-o").addClass('fa-check-square-o');
+            }
+            $(this).data("clicks", !clicks);
+        });
+    });
+    /*]]>*/
+</script>
+</html>

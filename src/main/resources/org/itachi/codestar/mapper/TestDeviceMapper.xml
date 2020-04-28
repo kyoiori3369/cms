@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.itachi.codestar.mapper.TestDeviceMapper">
+
+    <resultMap id="orderResultMap" type="order">
+        <id property="id" column="id"/>
+        <result property="customerId" column="customer_id" javaType="long"/>
+        <result property="number" column="number" javaType="string"/>
+        <result property="time" column="time" javaType="string"/>
+        <result property="status" column="status" javaType="string"/>
+        <result property="storageTime" column="storage_time" javaType="string"/>
+        <result property="createTime" column="create_time" javaType="long"/>
+        <result property="date" column="date" javaType="int"/>
+        <result property="customerName" column="customer_name" javaType="string"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="deliveryTime" column="delivery_time" javaType="string"/>
+        <result property="deleted" column="deleted" javaType="int"/>
+    </resultMap>
+    <resultMap id="orderManageResultMap" type="orderManage">
+        <id property="id" column="id"/>
+        <result property="customerId" column="customer_id" javaType="long"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="deliveryTime" column="delivery_time" javaType="string"/>
+        <result property="orderStatus" column="order_status" javaType="string"/>
+        <result property="orderTime" column="order_time" javaType="string"/>
+        <result property="customerName" column="customer_name" javaType="string"/>
+        <result property="createTime" column="create_time" javaType="string"/>
+        <result property="increment" column="increment" javaType="int"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="deleted" column="deleted" javaType="int"/>
+    </resultMap>
+
+    <resultMap id="testDeviceResultMap" type="testDevice">
+        <id property="id" column="id"/>
+        <result property="customerId" column="customer_id" javaType="long"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="deviceNumber" column="device_number" javaType="string"/>
+        <result property="deviceName" column="device_name" javaType="string"/>
+        <result property="plannedTime" column="planned_time" javaType="string"/>
+        <result property="outageTime" column="outage_time" javaType="string"/>
+        <result property="assemblyTime" column="assembly_time" javaType="string"/>
+        <result property="debugTime" column="debug_time" javaType="string"/>
+        <result property="debugState" column="debug_state" javaType="string"/>
+        <result property="remarks" column="remarks" javaType="string"/>
+        <result property="loadingState" column="loading_state" javaType="string"/>
+        <result property="loadingTime" column="loading_time" javaType="string"/>
+        <result property="loadingNumber" column="loading_number" javaType="string"/>
+        <result property="increment" column="increment" javaType="int"/>
+    </resultMap>
+
+
+    <select id="findOrder" resultMap="orderResultMap" parameterType="map">
+        select a.*, c.company_code, c.company_name, c.name as company_name from order_t a left join customer c on a.customer_id=c.id
+        where a.deleted = 0
+        <if test="number != null and number.length() > 0">
+            a.number=#{number}
+        </if>
+    </select>
+
+    <!--<select id="findOrderManage" resultMap="orderManageResultMap" parameterType="map">
+        select a.*, c.company_code, c.company_name, c.name as company_name from order_manage a left join customer c on a.customer_id=c.id
+        where a.deleted = 0
+        <if test="orderNumber != null and orderNumber.length() > 0">
+           and a.order_number=#{orderNumber}
+        </if>
+         limit #{offset},#{rows}
+    </select>-->
+
+    <select id="findLoadingNumber" resultType="Integer">
+        select max(a.increment) from test_device a where a.loading_time = #{0}
+    </select>
+
+
+    <!--<select id="findTestDevice" resultMap="testDeviceResultMap" parameterType="map">
+        select a.debug_time,a.debug_state,a.remarks,a.loading_state,a.loading_time,a.loading_number,
+        c.order_number,t.device_number,t.device_name,p.plan_time from test_device a
+        inner join order_manage c
+        on a.order_number =c.order_number
+        inner join device_t t
+        on a.device_number =t.device_number
+        and a.device_name = t.device_name
+        inner join purchase p
+        on a.planned_time = p.plan_time
+        <if test="orderNumber != null and orderNumber > 0">
+            where a.order_number=#{orderNumber}
+        </if>
+        limit #{offset},#{rows}
+    </select>-->
+
+    <select id="findTestDevice" resultMap="testDeviceResultMap" parameterType="map">
+        select
+            c.id,
+            c.order_number,
+            t.device_number,
+            t.device_name,
+            e.assembly_time,
+            a.debug_time,
+            a.debug_state,
+            a.loading_state,
+            a.loading_time,
+            a.loading_number,
+            a.remarks
+        from test_device a
+        inner join order_manage c
+          on a.order_id =c.id
+        inner join plan_device pd
+          on pd.order_id = c.id
+        inner join device_t t
+         on t.id = pd.device_id
+        inner join equipment_assembly e
+          on e.order_id = a.order_id
+        where
+          e.complete_state = 2
+        <if test="orderNumber != null and orderNumber > 0">
+            and a.order_number=#{orderNumber}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+
+
+    <update id="deleteAllByOrderIdIn">
+        update order_manage a  set a.deleted = 1
+        where a.id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+</mapper>

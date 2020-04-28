@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace="org.itachi.codestar.mapper.DeviceMapper">
+       <resultMap id="orderDeviceResultMap" type="OrderDevice">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id" javaType="long"/>
+        <result property="deviceId" column="device_id" javaType="long"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="orderTime" column="order_time" javaType="string"/>
+        <result property="deliveryTime" column="delivery_time" javaType="string"/>
+        <result property="deviceName" column="device_name" javaType="string"/>
+        <result property="deviceNumber" column="device_number" javaType="string"/>
+        <result property="deviceRule" column="device_rule" javaType="string"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="count" column="count" javaType="int"/>
+           <result property="orderPrice" column="order_price" javaType="double"/>
+        <result property="remarks" column="remarks" javaType="string"/>
+        <result property="outStatus" column="out_status" javaType="string"/>
+        <result property="status" column="status" javaType="int"/>
+
+    </resultMap>
+
+    <resultMap id="planManageResultMap" type="PlanDevice">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id" javaType="long"/>
+        <result property="planCode" column="plan_code" javaType="string"/>
+        <result property="deviceId" column="device_id" javaType="long"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="orderTime" column="order_time" javaType="string"/>
+        <result property="deliveryTime" column="delivery_time" javaType="string"/>
+        <result property="deviceName" column="device_name" javaType="string"/>
+        <result property="deviceNumber" column="device_number" javaType="string"/>
+        <result property="deviceRule" column="device_rule" javaType="string"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="count" column="count" javaType="int"/>
+        <result property="remarks" column="remarks" javaType="string"/>
+        <result property="outStatus" column="out_status" javaType="string"/>
+        <result property="status" column="status" javaType="string"/>
+        <result property="isStatus" column="isStatus" javaType="string"/>
+        <result property="flagStatus" column="flagStatus" javaType="string"/>
+        <result property="loadingState" column="loadingState" javaType="string"/>
+        <result property="outPercent" column="outPercent" javaType="int"/>
+        <result property="assemblingStatus" column="assemblingStatus" javaType="int"/>
+    </resultMap>
+
+    <resultMap id="deviceResultMap" type="device">
+        <id property="id" column="id"/>
+        <result property="deviceNumber" column="device_number" javaType="string"/>
+        <result property="deviceName" column="device_name" javaType="string"/>
+        <result property="deviceRule" column="device_rule" javaType="string"/>
+        <result property="deviceStatus" column="device_status" javaType="string"/>
+        <result property="remarks" column="remarks" javaType="string"/>
+        <result property="isCore" column="is_core" javaType="int"/>
+    </resultMap>
+
+
+    <select id="findOrderManage" resultMap="orderDeviceResultMap" parameterType="map">
+        select a.*, c.device_name, c.device_rule from order_device a left join device_t c on a.device_id=c.id
+        where a.deleted = 0
+        <if test="orderId != null and orderId > 0">
+            and a.order_id=#{orderId}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findPannedManage" resultMap="orderDeviceResultMap" parameterType="map">
+        select a.id,a.count,a.remarks,a.order_id,a.delivery_time,t.device_number,t.device_name,t.device_rule,b.order_number,
+        case when a.status =0 then '待确定' when a.status =2 then '已取消' when status =1 then '已确定' end as status,
+        c.company_name,c.company_code,b.order_time,b.delivery_time from order_device a
+        inner join order_manage b
+        on a.order_id = b.id
+        inner join customer c
+        on c.id =b.customer_id
+        inner join device_t t
+        on t.id =a.device_id
+        where b.deleted = 0
+        <if test="status != null ">
+            and a.status=#{status}
+        </if>
+        order by b.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE order_device SET status = 1 where id = #{0}
+    </update>
+
+    <update id="updateStatusIdIn">
+        update plan_device a  SET a.status = 2
+        WHERE a.status = 0 and a.id IN
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+
+    <update id="updatePlanStatus">
+        UPDATE plan_device SET status = 1, plan_time = sysdate()  where id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+    <update id="updateDeviceId">
+          UPDATE plan_device SET device_id = #{deviceId}  where plan_device_id = #{planDeviceId}
+    </update>
+    <update id="updatePlan">
+        UPDATE plan_device SET deleted = 1 where id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+
+    <update id="updateDeviceCount">
+        UPDATE order_device SET count = #{0} where id = #{1}
+    </update>
+
+    <select id="findPlanNumber" resultType="Integer">
+        select max(a.increment) from plan_device a where date_format(a.create_time ,"%Y-%m-%d") = date_format(sysdate(),"%Y-%m-%d")
+    </select>
+
+    <select id="fidPlanOne" resultType="org.itachi.codestar.domain.PlanDevice" >
+         select a.* from plan_device a where a.status = 0 and  a.plan_device_id = #{0} limit 0,1
+    </select>
+
+    <select id="findPlanManage" resultMap="planManageResultMap" parameterType="map">
+        select a.id,a.plan_code,a.device_id,a.order_id,t.device_number,t.device_name,t.device_rule,b.order_number,
+        case when a.status =0 then '待确定' when a.status =2 then '已取消' when a.status =1 then '已确定' end as status,
+        a.status as isStatus,c.company_name,c.company_code,b.order_time,s.delivery_time from plan_device a
+        inner join order_manage b
+        on a.order_id = b.id
+        inner join customer c
+        on c.id =b.customer_id
+        inner join order_device s
+        on s.id = a.plan_device_id
+        inner join device_t t
+        on t.id = a.device_id
+        where a.deleted = 0
+        <if test="orderNumber != null and orderNumber != ''">
+            and b.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+        <!--<if test="status != null ">
+            and a.status=#{status}
+        </if>-->
+        order by a.status,a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="countPlanManage" resultType="int">
+        select count(1) from plan_device a
+            inner join order_manage b
+            on a.order_id = b.id
+            inner join customer c
+            on c.id =b.customer_id
+            inner join order_device s
+            on s.id = a.plan_device_id
+            inner join device_t t
+            on t.id = a.device_id
+        where a.deleted = 0
+        <if test="orderNumber != null and orderNumber != ''">
+            and b.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+    </select>
+
+    <select id="countOrder" resultType="int">
+        select count(1) from plan_device a
+        inner join order_manage b
+        on a.order_id = b.id
+        inner join customer c
+        on c.id =b.customer_id
+        inner join order_device s
+        on s.id = a.plan_device_id
+        inner join device_t t
+        on t.id = a.device_id
+        where a.deleted = 0
+        <if test="orderNumber != null and orderNumber != ''">
+            and b.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+    </select>
+
+    <select id="findPlanManageOut" resultMap="planManageResultMap" parameterType="map">
+        select a.id,a.plan_code,a.device_id,a.order_id,t.device_number,t.device_name,t.device_rule,b.order_number,
+        case when a.out_status =0 then '待出库' when a.out_status =1 then '已出库' end as out_status,
+        ((select count(1) from  planned_scheduling k where k.plan_device_id = a.id and k.is_status = 1 and k.out_status = 0)* 100/(select  case when count(1) = 0 then 1 else count(1) end from  planned_scheduling k where k.plan_device_id = a.id and k.out_status = 0)) as outPercent,
+        a.status as isStatus,c.company_name,c.company_code,b.order_time,s.delivery_time from plan_device a
+        inner join order_manage b
+        on a.order_id = b.id
+        inner join customer c
+        on c.id =b.customer_id
+        inner join order_device s
+        on s.id = a.plan_device_id
+        inner join device_t t
+        on t.id = a.device_id
+        where a.deleted = 0
+        <if test="status != null ">
+            and a.status=#{status}
+        </if>
+        <if test="orderNumber != null and orderNumber != ''">
+            and b.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findOverview" resultMap="planManageResultMap" parameterType="map">
+        SELECT m.order_number,c.company_name,
+        t.device_name,t.device_number,m.order_time,p.status,
+        p.out_status,p.plan_code,
+         case when r.loading_state =0 then '未发货' when r.loading_state =1 then '已发货' end  as loadingState,
+         case when r.debug_state =0 then '未开始' when r.debug_state =1 then 'NG' when r.debug_state=2 then 'OK' end as flagStatus,
+        ((select count(1) from  planned_scheduling k where k.plan_device_id = p.id and k.is_status = 1 and k.out_status = 0)* 100/(select  case when count(1) = 0 then 1 else count(1) end from  planned_scheduling k where k.plan_device_id = p.id and k.out_status = 0)) as outPercent,
+        ((select count(1) from  planned_scheduling k where k.plan_device_id = p.id and k.am_status = 1 and k.assembling_status =1)* 100/(select  case when count(1) = 0 then 1 else count(1) end from  planned_scheduling k where k.plan_device_id = p.id and k.assembling_status =1)) as assemblingStatus
+         FROM plan_device p
+         inner join order_device d
+         on d.id = p.plan_device_id
+         inner join device_t t
+         on t.id = d.device_id
+         inner join order_manage m
+         on d.order_id= m.id
+         inner join customer c
+         on c.id =m.customer_id
+         left join equipment_assembly r
+          on p.id = r.plan_device_id
+        where m.deleted = 0 and p.deleted = 0 and p.status != 2
+        <if test="orderNumber != null and orderNumber != ''">
+            and m.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+        <if test="deviceNumber != null and deviceNumber != ''">
+            and p.plan_code like CONCAT('%',#{deviceNumber},'%')
+        </if>
+          order by r.loading_state,r.debug_state ,assemblingStatus,outPercent ,p.status ,p.id desc
+        limit #{offset},#{rows}
+    </select>
+    <select id="findOverviewCount" resultType="int" >
+        SELECT count(1)
+        FROM plan_device p
+        inner join order_device d
+        on d.id = p.plan_device_id
+        inner join device_t t
+        on t.id = d.device_id
+        inner join order_manage m
+        on d.order_id= m.id
+        inner join customer c
+        on c.id =m.customer_id
+        where m.deleted = 0 and p.deleted = 0 and p.status != 2
+        <if test="orderNumber != null and orderNumber != ''">
+            and m.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+        <if test="deviceNumber != null and deviceNumber != ''">
+            and t.device_number like CONCAT('%',#{deviceNumber},'%')
+        </if>
+    </select>
+
+
+    <select id="countDevice" resultType="int">
+        select count(1) from device_t a
+        where 1=1
+        <if test="deviceName != null and deviceName != ''">
+            and a.device_name like CONCAT('%',#{deviceName},'%')
+        </if>
+    </select>
+
+    <select id="findDevice" resultMap="deviceResultMap" parameterType="map">
+        select * from device_t a where 1=1
+        <if test="deviceName != null and deviceName != ''">
+            and a.device_name like CONCAT('%',#{deviceName},'%')
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+</mapper>

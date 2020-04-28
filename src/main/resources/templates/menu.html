@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- Left side column. contains the logo and sidebar -->
+<aside class="main-sidebar" th:fragment="menu(pId, cId)">
+	<!-- sidebar: style can be found in sidebar.less -->
+	<section class="sidebar">
+		<!-- Sidebar user panel -->
+		<div class="user-panel">
+			<!--<div class="pull-left image">-->
+				<!--<img th:src="@{/scripts/dist/img/logo.jpg}" class="img-circle" alt="User Image" />-->
+			<!--</div>-->
+			<!--<div class="pull-left info">-->
+				<!--<h2>EMG</h2>-->
+				<!--&lt;!&ndash;<a href="javascript:void(0);"><i class="fa fa-circle text-success"></i> 在线</a>&ndash;&gt;-->
+			<!--</div>-->
+		</div>
+		<!-- sidebar menu: : style can be found in sidebar.less -->
+		<ul class="sidebar-menu">
+			<!--<li class="header">主导航</li>-->
+			<!--<li th:class="${pId} == 0 ? 'active' : ''">-->
+				<!--<a th:href="@{/}">-->
+					<!--<i class="fa fa-th"></i> <span>欢迎页</span>-->
+				<!--</a>-->
+			<!--</li>-->
+			<li th:class="${pId} == 1 ? 'active treeview' : 'treeview'">
+				<a th:href="@{/index}"><i class="fa fa-server"></i> <span>生产总览</span></a>
+			</li>
+			<li th:class="${pId} == 2 ? 'active treeview' : 'treeview'">
+				<a th:href="@{/order}"><i class="fa fa-server"></i> <span>订单管理</span></a>
+			</li>
+			<li th:class="${pId} == 3 ? 'active treeview' : 'treeview'">
+				<a th:href="@{/planManage}"><i class="fa fa-server"></i> <span>计划管理</span></a>
+			</li>
+			<li th:class="${pId} == 4 ? 'active treeview' : 'treeview'">
+				<a href="javascript:void(0);">
+					<i class="fa fa-server"></i> <span>采购管理</span>
+					<span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+				</a>
+				<ul class="treeview-menu">
+					<li th:class="(${pId} == 4 and ${cId} == 0) ? 'active' : ''"><a th:href="@{/purchase}"><i class="fa fa-circle-o"></i> 采购计划</a></li>
+					<li th:class="(${pId} == 4 and ${cId} == 1) ? 'active' : ''"><a th:href="@{/purchaseManage}"><i class="fa fa-circle-o"></i> 采购订单</a></li>
+				</ul>
+			</li>
+			<li th:class="${pId} == 5 ? 'active treeview' : 'treeview'">
+				<a href="javascript:void(0);">
+					<i class="fa fa-server"></i> <span>仓库管理</span>
+					<span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+				</a>
+				<ul class="treeview-menu">
+					<li th:class="(${pId} == 5 and ${cId} == 0) ? 'active' : ''"><a th:href="@{/warehouse}"><i class="fa fa-circle-o"></i> 库存管理</a></li>
+					<li th:class="(${pId} == 5 and ${cId} == 1) ? 'active' : ''"><a th:href="@{/storage}"><i class="fa fa-circle-o"></i> 入库管理</a></li>
+					<li th:class="(${pId} == 5 and ${cId} == 2) ? 'active' : ''"><a th:href="@{/shipment}"><i class="fa fa-circle-o"></i> 出库管理</a></li>
+				</ul>
+			</li>
+			<li th:class="${pId} == 6 ? 'active treeview' : 'treeview'">
+				<a href="javascript:void(0);">
+					<i class="fa fa-server"></i> <span>系统配置</span>
+					<span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+				</a>
+				<ul class="treeview-menu">
+					<li th:class="(${pId} == 6 and ${cId} == 0) ? 'active' : ''"><a th:href="@{/customer}"><i class="fa fa-circle-o"></i> 客户管理</a></li>
+					<li th:class="(${pId} == 6 and ${cId} == 1) ? 'active' : ''"><a th:href="@{/planManagement}"><i class="fa fa-circle-o"></i> 零件配置</a></li>
+					<li th:class="(${pId} == 6 and ${cId} == 2) ? 'active' : ''"><a th:href="@{/deviceManage}"><i class="fa fa-circle-o"></i> 设备配置</a></li>
+				</ul>
+			</li>
+			<li th:class="${pId} == 7 ? 'active treeview' : 'treeview'">
+				<a href="javascript:void(0);">
+					<i class="fa fa-server"></i> <span>装配调试</span>
+					<span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+				</a>
+				<ul class="treeview-menu">
+					<li th:class="(${pId} == 7 and ${cId} == 0) ? 'active' : ''"><a th:href="@{/assembling}"><i class="fa fa-circle-o"></i> 设备装配</a></li>
+					<li th:class="(${pId} == 7 and ${cId} == 1) ? 'active' : ''"><a th:href="@{/device}"><i class="fa fa-circle-o"></i> 设备调试</a></li>
+				</ul>
+			</li>
+			<li th:class="${pId} == 8 ? 'active treeview' : 'treeview'">
+				<a th:href="@{/repair}"><i class="fa fa-server"></i> <span>维修管理</span></a>
+			</li>
+
+
+		</ul>
+	</section>
+	<!-- /.sidebar -->
+</aside>
+</html>

@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.itachi.codestar.mapper.PartMapper">
+
+    <resultMap id="partManageResultMap" type="PlannedScheduling">
+    <id property="id" column="id"/>
+    <result property="deviceId" column="device_id" javaType="long"/>
+    <result property="orderId" column="order_id" javaType="long"/>
+    <result property="partId" column="part_id" javaType="long"/>
+    <result property="partCode" column="part_code" javaType="string"/>
+    <result property="partName" column="part_name" javaType="string"/>
+    <result property="partBrand" column="part_brand" javaType="string"/>
+    <result property="remarks" column="remarks" javaType="string"/>
+    <result property="partSource" column="part_source" javaType="string"/>
+    <result property="partPrice" column="part_price" javaType="string"/>
+    <result property="partSupplier" column="part_supplier" javaType="string"/>
+    <result property="ruleModel" column="rule_model" javaType="string"/>
+    <result property="partState" column="part_state" javaType="string"/>
+    <result property="numberParts" column="number_parts" javaType="int"/>
+    <result property="partsSum" column="partsSum" javaType="int"/>
+    <result property="isStatus" column="is_status" javaType="int"/>
+    <result property="amStatus" column="am_status" javaType="int"/>
+    <result property="deleted" column="deleted" javaType="int"/>
+    <result property="threshold" column="threshold" javaType="int"/>
+    <result property="atStatus" column="atStatus" javaType="string"/>
+</resultMap>
+
+    <resultMap id="partTempResultMap" type="WarehouseTemp">
+        <id property="id" column="id"/>
+        <result property="planSheetCode" column="plan_sheet_code" javaType="string"/>
+        <result property="planCode" column="plan_code" javaType="string"/>
+        <result property="purchaseCode" column="purchase_code" javaType="string"/>
+        <result property="partId" column="part_id" javaType="Long"/>
+        <result property="partCode" column="part_code" javaType="string"/>
+        <result property="partName" column="part_name" javaType="string"/>
+        <result property="partBrand" column="part_brand" javaType="string"/>
+        <result property="ruleModel" column="rule_model" javaType="string"/>
+        <result property="numberParts" column="number_parts" javaType="string"/>
+        <result property="partSource" column="part_source" javaType="string"/>
+        <result property="purchaseCount" column="purchase_count" javaType="int"/>
+        <result property="isStatus" column="is_status" javaType="string"/>
+        <result property="threshold" column="threshold" javaType="int"/>
+    </resultMap>
+
+
+
+    <resultMap id="deviceStandardResultMap" type="DeviceStandard">
+        <id property="id" column="id"/>
+        <result property="deviceId" column="device_id" javaType="long"/>
+        <result property="partId" column="part_id" javaType="long"/>
+        <result property="partCode" column="part_code" javaType="string"/>
+        <result property="partName" column="part_name" javaType="string"/>
+        <result property="partBrand" column="part_brand" javaType="string"/>
+        <result property="ruleModel" column="rule_model" javaType="string"/>
+        <result property="partStatus" column="part_source" javaType="string"/>
+        <result property="partCount" column="part_count" javaType="int"/>
+        <result property="partRemarks" column="part_remarks" javaType="string"/>
+    </resultMap>
+
+    <resultMap id="assemblingResultMap" type="Assembling">
+        <id property="id" column="id"/>
+        <result property="planDeviceId" column="plan_device_id" javaType="long"/>
+        <result property="orderId" column="order_id" javaType="long"/>
+        <result property="planCode" column="plan_code" javaType="string"/>
+        <result property="deviceId" column="device_id" javaType="long"/>
+        <result property="purchaseTime" column="purchase_time" javaType="string"/>
+        <result property="outTime" column="out_time" javaType="string"/>
+        <result property="outCode" column="out_code" javaType="string"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="deviceNumber" column="device_number" javaType="string"/>
+        <result property="deviceName" column="device_name" javaType="string"/>
+        <result property="assemblyTime" column="assembly_time" javaType="string"/>
+        <result property="debugTime" column="debug_time" javaType="string"/>
+        <result property="debugState" column="debug_state" javaType="int"/>
+        <result property="remarks" column="remarks" javaType="string"/>
+        <result property="loadingState" column="loading_state" javaType="int"/>
+        <result property="loadingTime" column="loading_time" javaType="string"/>
+        <result property="loadingNumber" column="loading_number" javaType="string"/>
+        <result property="status" column="status" javaType="string"/>
+        <result property="outPercent" column="outPercent" javaType="int"/>
+        <result property="flagStatus" column="flagStatus" javaType="string"/>
+    </resultMap>
+
+    <resultMap id="repairManageResultMap" type="Entrucking">
+        <id property="id" column="id"/>
+        <result property="deviceId" column="device_id" javaType="long"/>
+        <result property="customerId" column="customer_id" javaType="long"/>
+        <result property="planCode" column="plan_code" javaType="string"/>
+        <result property="planDeviceId" column="plan_device_id" javaType="long"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="deviceNumber" column="device_number" javaType="string"/>
+        <result property="deviceName" column="device_name" javaType="string"/>
+        <result property="loadingTime" column="loading_time" javaType="string"/>
+        <result property="loadingNumber" column="loading_number" javaType="string"/>
+        <result property="orderTime" column="order_time" javaType="string"/>
+        <result property="uploadPeople" column="upload——people" javaType="string"/>
+        <result property="repairTime" column="repair_time" javaType="string"/>
+    </resultMap>
+
+    <select id="findPlanDeviceId" resultMap="partManageResultMap" parameterType="map">
+        select a.*,c.part_code,c.part_name,c.part_brand,c.remarks,c.part_source,c.number_parts as partsSum from planned_scheduling a left join part_configuration c on a.part_id=c.id
+        where a.deleted = 0
+        <if test="planDeviceId != null">
+            and a.plan_device_id =#{planDeviceId}
+        </if>
+        <if test="partName != null and partName != ''">
+            and c.part_name like CONCAT('%',#{partName},'%')
+        </if>
+        <if test="isStatus != null">
+            and is_status = #{isStatus}
+        </if>
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findOutPlanDeviceId" resultMap="partManageResultMap" parameterType="map">
+        select a.*,c.part_code,c.part_name,c.part_brand,c.remarks,c.part_source,c.number_parts as partsSum from planned_scheduling a left join part_configuration c on a.part_id=c.id
+        where a.deleted = 0 and a.out_status = 0
+        <if test="planDeviceId != null">
+            and a.plan_device_id =#{planDeviceId}
+        </if>
+        <if test="partName != null and partName != ''">
+            and c.part_name like CONCAT('%',#{partName},'%')
+        </if>
+        order by a.is_status
+        limit #{offset},#{rows}
+    </select>
+    <select id="findOutPlanDeviceIdCount" resultType="int" parameterType="map">
+        select count(1) from planned_scheduling a left join part_configuration c on a.part_id=c.id
+        where a.deleted = 0 and a.out_status = 0
+        <if test="planDeviceId != null">
+            and a.plan_device_id =#{planDeviceId}
+        </if>
+        <if test="partName != null and partName != ''">
+            and c.part_name like CONCAT('%',#{partName},'%')
+        </if>
+    </select>
+
+    <select id="findAssemblingPlanDeviceId" resultMap="partManageResultMap" parameterType="map">
+        select a.id,a.number_parts,
+        case when am_status = 1 then '已装配'  when a.assembling_status =0 then '待出库'  when a.assembling_status =1 then '待装配' end as atStatus,
+        c.part_code,c.part_name,c.part_brand,c.remarks,c.part_source,c.number_parts as partsSum from planned_scheduling a left join part_configuration c on a.part_id=c.id
+        where a.deleted = 0 and a.assembling_status != -1
+        <if test="planDeviceId != null">
+            and a.plan_device_id =#{planDeviceId}
+        </if>
+        <if test="partName != null and partName != ''">
+            and c.part_name like CONCAT('%',#{partName},'%')
+        </if>
+         order by atStatus desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findAssemblingPlanDeviceIdCount" resultType="int">
+        select count(1) from planned_scheduling a left join part_configuration c on a.part_id=c.id
+        where a.deleted = 0 and a.assembling_status != -1
+        <if test="planDeviceId != null">
+            and a.plan_device_id =#{planDeviceId}
+        </if>
+        <if test="partName != null and partName != ''">
+            and c.part_name like CONCAT('%',#{partName},'%')
+        </if>
+    </select>
+
+
+    <update id="updateOutModifyIdIn">
+        update planned_scheduling a set a.is_status = 1
+        where a.id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+
+    <update id="updateAssemblingStatusById">
+        update planned_scheduling a set a.is_status = 1
+        where a.id = #{0}
+    </update>
+
+    <update id="updateAssemblingStatusSingle">
+        update planned_scheduling a set a.assembling_status = 1
+        where a.is_status =1 and a.id=#{0}
+    </update>
+
+    <update id="updateAssemblingStatus">
+        update planned_scheduling a set a.assembling_status = 1
+        where a.is_status =1 and a.id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+    <update id="updateAssemblingStatusDel">
+        update planned_scheduling a set a.assembling_status = -1
+        where a.is_status =1 and a.id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+    <update id="updateAssemblingStatusDelSingle">
+        update planned_scheduling a set a.assembling_status = -1
+        where a.is_status =1 and a.id = #{0}
+    </update>
+
+
+    <select id="countPartName" resultType="int">
+        select count(1) from part_configuration p
+               where deleted = 0
+        <if test="partName != null and partName != ''">
+              and part_name like CONCAT('%',#{partName},'%')
+        </if>
+    </select>
+
+    <select id="findPart" resultType="org.itachi.codestar.domain.PartConfiguration" parameterType="map">
+        SELECT
+            p.id as id,
+            p.number_parts AS numberParts,
+            p.part_code AS partCode,
+            p.part_name AS partName,
+            p.part_source AS partSource,
+            p.part_state AS partState,
+            p.rule_model AS ruleModel,
+            p.threshold AS threshold
+        from part_configuration p
+        where deleted = 0
+        <if test="partName != null and partName != ''">
+            and part_name like CONCAT('%',#{partName},'%')
+        </if>
+        order by (p.threshold - p.number_parts) desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findPartTemp" resultMap="partTempResultMap" parameterType="map">
+        select a.*,b.part_code,b.part_name,b.part_brand,b.rule_model,b.number_parts,b.part_source,b.number_parts,b.threshold from warehouse_temp a
+        inner join part_configuration b
+        on a.part_id = b.id
+        where a.deleted = 0
+        <if test="planSheetCode != null">
+            and a.plan_sheet_code = #{planSheetCode}
+        </if>
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findManageStandard" resultMap="deviceStandardResultMap" parameterType="map">
+        select a.id,a.device_id,a.part_id,a.part_count,a.part_remarks,b.part_code,b.part_name,b.part_brand,b.rule_model,b.number_parts,b.part_source from device_standard a
+        inner join part_configuration b
+        on a.part_id = b.id
+        where a.deleted = 0
+        <if test="deviceId != null">
+            and a.device_id = #{deviceId}
+        </if>
+        <if test="planDeviceId != null">
+            and a.plan_device_id = #{planDeviceId}
+        </if>
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findOutNumber" resultType="Integer">
+         select max(a.increment) from equipment_assembly a where date_format(a.out_time ,"%Y-%m-%d") = date_format(sysdate(),"%Y-%m-%d")
+    </select>
+
+
+    <select id="countTestDevice" resultType="int">
+        select count(1)
+        from equipment_assembly e
+        inner join device_t d
+        on e.device_id = d.id
+        inner join order_manage m
+        on e.order_id = m.id
+        inner join customer c
+        on m.customer_id= c.id
+        where e.deleted= 0 and   e.status = 2
+        <if test="orderNumber != null and orderNumber != ''">
+            and m.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+    </select>
+
+
+    <select id="findTestDevicd" resultMap="assemblingResultMap" parameterType="map">
+        select
+        e.*,
+        case when e.debug_state =0 then '未开始' when e.debug_state =1 then 'NG' when e.debug_state=2 then 'OK' end as flagStatus,
+        m.order_number,
+        d.device_number,
+        d.device_name,
+        c.company_code,
+        c.company_name
+        from equipment_assembly e
+        inner join device_t d
+        on e.device_id = d.id
+        inner join order_manage m
+        on e.order_id = m.id
+        inner join customer c
+        on m.customer_id= c.id
+        where e.deleted= 0 and  e.status = 2
+        <if test="orderNumber != null and orderNumber != ''">
+            and m.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+        order by e.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findAssembling" resultMap="assemblingResultMap" parameterType="map">
+        select a.id,a.plan_code,a.plan_device_id,a.order_id,a.assembly_time,a.purchase_time,a.out_time,a.out_code,
+        case when a.status =0 then '进行中' when a.status =2 then '已完成' when a.status =1 then '待调试' end as status,
+        ((select count(1) from  planned_scheduling k where k.plan_device_id = a.plan_device_id and k.am_status = 1 and k.assembling_status !=-1)* 100/(select  case when count(1) = 0 then 1 else count(1) end from  planned_scheduling k where k.plan_device_id = a.plan_device_id and k.assembling_status !=-1)) as outPercent,
+        b.device_name,b.device_number,m.order_number from equipment_assembly a
+        inner join device_t b
+        on a.device_id = b.id
+        inner join order_manage m
+        on a.order_id = m.id
+        where a.deleted= 0
+        <if test="status != null and status.length() > 0">
+            and a.status = #{status}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <update id="updateCompleteModifyIdIn">
+       update planned_scheduling set am_status = 1 where id in
+        <foreach collection="list" item="items" open="(" separator="," close=")">
+            #{items}
+        </foreach>
+    </update>
+
+    <select id="countRepair" resultType="int">
+        select count(1)
+        from equipment_assembly a
+        inner join order_manage c
+        on a.order_id =c.id
+        inner join device_t t
+        on t.id =a.device_id
+        inner join customer r
+        on r.id = c.customer_id
+        where a.deleted=0 and a.loading_state = 1
+        <if test="orderNumber != null and orderNumber != ''">
+            and c.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+    </select>
+
+
+    <select id="findRepair" resultMap="repairManageResultMap" parameterType="map">
+        select
+        a.id,a.plan_code,a.repair_time,a.loading_time,c.order_time,c.order_number,t.device_number,t.device_name,r.company_name,r.company_code,a.plan_device_id
+        from equipment_assembly a
+        inner join order_manage c
+        on a.order_id =c.id
+        inner join device_t t
+        on t.id =a.device_id
+        inner join customer r
+        on r.id = c.customer_id
+        where a.deleted=0 and a.loading_state = 1
+        <if test="orderNumber != null and orderNumber.length() > 0">
+            and c.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findIds" resultMap="repairManageResultMap" parameterType="map">
+        select
+        a.id,a.plan_code,c.order_number,t.device_number,t.device_name,r.company_name,r.company_code
+        from entrucking a
+        inner join order_manage c
+        on a.order_id =c.id
+        inner join device_t t
+        on t.id =a.device_id
+        inner join customer r
+        on r.id = c.customer_id
+        where a.status = 0
+        <if test="loadingNumber != null and loadingNumber.length() > 0">
+            and a.loading_number = #{loadingNumber}
+        </if>
+        <if test="id != null and id > 0">
+            and a.id = #{id}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <select id="findLoadingNumber" resultType="Integer">
+        select max(a.increment) from entrucking a where a.storage_time = #{0}
+    </select>
+
+    <select id="findPartList" resultType="org.itachi.codestar.domain.PartConfiguration" parameterType="map">
+        select
+            p.id as id,
+            p.part_code as partCode,
+            p.part_name as partName,
+            p.part_brand as partBrand,
+            p.rule_model as ruleModel,
+            p.part_source as partSource,
+            p.part_price as partPrice,
+            p.part_image as partImage,
+            p.remarks as remarks
+        from part_configuration p
+        where deleted = 0
+        <if test="partName != null and partName != ''">
+            and part_name like CONCAT('%',#{partName},'%')
+        </if>
+        order by p.id desc
+        limit #{offset},#{rows}
+    </select>
+
+</mapper>

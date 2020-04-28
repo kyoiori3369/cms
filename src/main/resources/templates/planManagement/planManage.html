@@ -1,0 +1,365 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:v-on="http://www.w3.org/1999/xhtml"
+      xmlns:v-bind="http://www.w3.org/1999/xhtml" xmlns:>
+<head th:replace="common/head::head"></head>
+<body class="hold-transition skin-blue sidebar-mini">
+<div class="wrapper">
+    <th:block th:replace="header::header"/>
+    <th:block th:replace="menu::menu(3, 0)"/>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1 th:replace="common/name::content"></h1>
+            <ol class="breadcrumb">
+                <li><a href="javascript:void(0);"><i class="fa fa-server"></i>计划管理</a></li>
+                <li class="active">计划管理</li>
+            </ol>
+        </section>
+
+        <!-- Main content -->
+        <section class="content" id="app">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">计划管理</h3>
+                    <div class="box-tools">
+                        <div class="input-group input-group-sm" style="width: 150px;">
+                            <input type="text" name="orderNumber" class="form-control pull-right"
+                                   placeholder="订单编号"/>
+                            <div class="input-group-btn">
+                                <button type="submit" class="btn btn-default" v-on:click="search(1);"><i class="fa fa-search">查询</i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <div class="mailbox-controls">
+                        <!-- Check all button -->
+                        <button type="button" class="btn btn-default btn-sm checkbox-toggle"><i class="fa fa-square-o"></i></button>
+                        <!-- /.btn-group -->
+                        <button type="button" class="btn btn-default btn-sm" v-on:click="search(1);"><i class="fa fa-refresh"></i></button>
+                        <div class="pull-right">
+                            {{start}} - {{end}} / {{total}}
+                            <!-- /.btn-group -->
+                        </div>
+                        <!-- /.pull-right -->
+                    </div>
+                    <div class="table-responsive mailbox-messages">
+                        <table class="table table-hover">
+                            <tr>
+                                <th></th>
+                                <th nowrap="true">下单日期</th>
+                                <th nowrap="true">交货日期</th>
+                                <th nowrap="true">订单编号</th>
+                                <th nowrap="true">客户名称</th>
+                                <th nowrap="true">设备编号</th>
+                                <th nowrap="true">设备名称</th>
+                                <th nowrap="true">设备型号</th>
+                                <th nowrap="true">订单状态</th>
+                                <th nowrap="true">操作</th>
+                            </tr>
+                            <tr v-for="(item, key) in orderDevices">
+                                <td nowrap="true" ><input type="checkbox" v-if="item.isStatus==0" v-bind:value="item.id"></td>
+                                <td nowrap="true">{{item.orderTime}}</td>
+                                <td nowrap="true">{{item.deliveryTime}}</td>
+                                <td nowrap="true">{{item.orderNumber}}</td>
+                                <td nowrap="true">{{item.companyName}}</td>
+                                <td nowrap="true">{{item.planCode}}</td>
+                                <td nowrap="true">{{item.deviceName}}</td>
+                                <td nowrap="true">{{item.deviceRule}}</td>
+                                <td nowrap="true">{{item.status}}</td>
+                               <!-- <td nowrap="true" v-if="item.isStatus!=1 || item.isStatus!=2"></td>-->
+                                <td nowrap="true">
+                                    <button type="button" class="btn btn-default btn-sm"  v-on:click="openServiceWindow(item.id,item.isStatus);" style="background:#ffa430"><span style="color:#000000;">计划排期</span></button>
+                                    <!--<button type="button" class="btn btn-default btn-sm"  style="background:#ffa90f" v-on:click="openDeviceStandWindow(item.id,'订单变更');"><span style="color:#000000;">订单变更</span></button>-->
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="box-footer clearfix">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-sm" style="background:#ffa430" v-on:click="revoke(this);"><span style="color:#000000;">订单撤销</span></button>
+                        <button type="button" class="btn btn-default btn-sm"   style="background:#ffa430" v-on:click="buttonDisabled(this);"><span style="color:#000000;">计划确定</span></button>
+                    </div>
+                    <ul class="pagination pagination-sm no-margin pull-right">
+                        <li><a href="javascript:void(0);" v-on:click="search(1);">&laquo;</a></li>
+                        <li v-for="item in size" v-if="item == page"><a href="javascript:void(0);">{{item}}</a></li>
+                        <li v-else="v-else"><a href="javascript:void(0);" v-on:click="search(item);">{{item}}</a></li>
+                        <li><a href="javascript:void(0);" v-on:click="search(size);">&raquo;</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- /.box -->
+            <div class="modal fade" id="service-dialog" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <div class="box box-primary modal-content">
+                        <div class="modal-header with-border">
+                            <h3 class="modal-title"></h3>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <input type="hidden" id="appId" v-model="orderDevice.id" />
+                                <label for="orderNumber">订单编号</label>
+                                <input type="text" class="form-control" id="orderNumber" placeholder="订单编号" v-model="orderDevice.orderNumber" />
+                            </div>
+                            <div class="form-group">
+                                <label for="customerName">客户名称</label>
+                                <input type="text" class="form-control" id="customerName" placeholder="设备名称" v-model="orderDevice.customerName" />
+                            </div>
+                            <div class="form-group">
+                                <label for="deviceNumber">客户代号</label>
+                                <input type="text" class="form-control" id="deviceNumber" placeholder="设备编号" v-model="orderDevice.deviceNumber" />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary" v-on:click="submitService();">提交</button>
+                            <button type="submit" class="btn btn-default pull-right" v-on:click="closeServiceWindow();">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <th:block th:replace="footer::footer"/>
+</div>
+<!-- ./wrapper -->
+</body>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    $(function () {
+        var vue = new Vue({
+            el: "#app",
+            data: {
+                total: 0,
+                start: 0,
+                end: 0,
+                size: 0,
+                page: 1,
+                rows: 10,
+                orderDevices:[],
+                orderDevice:{},
+                pager: {},
+                dialog: {}
+            },
+            methods: {
+                search: function (index) {
+                    var size = Math.ceil(this.total / this.rows);
+                    if (!index) {
+                        index = 1;
+                    }
+                    if (index > size) {
+                        index = size;
+                    }
+                    if (index < 1) {
+                        index = 1;
+                    }
+                    this.page = index;
+                    var _self = this;
+                    var url = [[@{/api/plannedscheduling/planMage}]];
+                    $.get(url, {
+                        orderNumber: $("input[name='orderNumber']").val(),
+                        page: this.page,
+                        rows: this.rows
+                    }, function (datas) {
+                        if (datas && datas.orderDevices) {
+                            _self.orderDevices = datas.orderDevices;
+                            $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                            var clicks = $(".checkbox-toggle").data('clicks');
+                            if (clicks) {
+                                $(".checkbox-toggle").click();
+                            }
+                            _self.total = datas.pager.total;
+                            _self.size = Math.ceil(_self.total / _self.rows);
+                            _self.start = (_self.page - 1) * _self.rows + 1;
+                            _self.end = Math.min(_self.total, _self.page * _self.rows);
+                        }
+                    }).error(function (XMLHttpRequest) {
+                        window.top.errorMessage(XMLHttpRequest);
+                    });
+                },
+                submitService: function () {
+                    var services_api_url = [[@{/api/plannedscheduling/change}]];
+                    var _self = this;
+                    $.ajax({
+                        url : services_api_url,
+                        type: "PUT",
+                        contentType: 'application/json',
+                        success: function() {
+                            _self.closeServiceWindow();
+                            layer.alert('变更成功', {title: '操作提示', icon: 1});
+                            _self.search(_self.page);
+                        },
+                        error: function (XMLHttpRequest) {
+                            if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                // console.log(XMLHttpRequest.responseJSON.code);
+                                var message = XMLHttpRequest.responseJSON.message;
+                                var errors = XMLHttpRequest.responseJSON.errors;
+                                if (errors && errors.length > 0) {
+                                    $.each(errors, function (i, error) {
+                                        if (error && error.message) {
+                                            message += "<br />" + error.message;
+                                        }
+                                    });
+                                }
+                                layer.alert(message, {title: '操作提示', icon: 0});
+                            } else {
+                                layer.alert('变更失败', {title: '操作提示', icon: 2});
+                            }
+                        }
+                    });
+                },
+                openServiceWindow:function (id,status) {
+                    window.location.href = "/plannedScheduling?planDeviceId="+id+"&ts="+status;
+                },
+                openDeviceStandWindow: function (id, title) {
+                    var ids = [];
+                    $(".mailbox-messages input:checked").each(function () {
+                        ids.push($(this).val());
+                    });
+                    this.dialog.find("h3.modal-title").html(title);
+                    if (id > 0) {
+                        var services_api_url = [[@{/api/plannedscheduling/planMage}]];
+                        var _self = this;
+                        $.get(services_api_url + "/" + id +"/"+ids, function (result) {
+                            if (result) {
+                                _self.orderDevice = result;
+                                var clicks = $(".checkbox-toggle").data('clicks');
+                                if (clicks) {
+                                    $(".checkbox-toggle").click();
+                                }
+                            }
+                        }).error(function (XMLHttpRequest) {
+                            window.top.errorMessage(XMLHttpRequest);
+                        });
+                    }
+                    this.dialog.modal("show");
+                },
+                initDialog: function () {
+                    this.dialog = $('#service-dialog').modal({
+                        backdrop: false,
+                        keyboard: false,
+                        show: false
+                    });
+                    // $("div.ui-dialog-titlebar").hide();
+                    this.dialog.modal("hide");
+                },
+                closeServiceWindow: function () {
+                    this.dialog.modal("hide");
+                },
+                 buttonDisabled:function(){
+                     var ids = [];
+                     var _self = this;
+                     $(".mailbox-messages input:checked").each(function () {
+                         ids.push($(this).val());
+                     });
+                     if(ids.length<=0){
+                         layer.alert('请选择订单', {title: '操作提示', icon: 1});
+                         return;
+                     }
+                     layer.confirm('是否确定订单？', {
+                         btn: ['确定','取消']
+                     }, function(){
+                         var api_url = [[@{/api/plannedscheduling/update}]];
+                         $.ajax({
+                             url : api_url,
+                             type: "PUT",
+                             data: JSON.stringify(ids),
+                             contentType: 'application/json',
+                             success: function() {
+                                 layer.alert('计划确定成功', {title: '操作提示', icon: 1});
+                                 _self.search();
+                             },
+                             error: function (XMLHttpRequest) {
+                                 if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                     // console.log(XMLHttpRequest.responseJSON.code);
+                                     var message = XMLHttpRequest.responseJSON.message;
+                                     var errors = XMLHttpRequest.responseJSON.errors;
+                                     if (errors && errors.length > 0) {
+                                         $.each(errors, function (i, error) {
+                                             if (error && error.message) {
+                                                 message += "<br />" + error.message;
+                                             }
+                                         });
+                                     }
+                                     layer.alert(message, {title: '操作提示', icon: 0});
+                                 } else {
+                                     layer.alert('订单撤销失败', {title: '操作提示', icon: 2});
+                                 }
+                             }
+                         });
+                     }, function(){
+                     });
+                 },
+                //订单撤销
+                revoke:function(){
+                    var ids = [];
+                    $(".mailbox-messages input:checked").each(function () {
+                        ids.push($(this).val());
+                    });
+                    if(ids.length <= 0){
+                        layer.alert('请选择撤销的订单', {title: '操作提示', icon: 1});
+                        return;
+                    }
+                    layer.confirm('你确定撤销订单？', {
+                        btn: ['确定','取消']
+                    }, function(){
+                        var api_url = [[@{/api/plannedscheduling}]];
+                        $.ajax({
+                            url : api_url,
+                            type: "PUT",
+                            data: JSON.stringify(ids),
+                            contentType: 'application/json',
+                            success: function() {
+                                    layer.alert('订单撤销成功', {title: '操作提示', icon: 1});
+                                    var clicks = $(".checkbox-toggle").data('clicks');
+                                    if (clicks) {
+                                        $(".checkbox-toggle").click();
+                                    }
+                                location.reload();
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    // console.log(XMLHttpRequest.responseJSON.code);
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                } else {
+                                    layer.alert('订单撤销失败', {title: '操作提示', icon: 2});
+                                }
+                            }
+                        });
+                    }, function(){
+                    });
+                }
+            }
+        });
+        vue.initDialog();
+        vue.search(1);
+        $(".checkbox-toggle").click(function () {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                //Uncheck all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                $(".fa", this).removeClass("fa-check-square-o").addClass('fa-square-o');
+            } else {
+                //Check all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("check");
+                $(".fa", this).removeClass("fa-square-o").addClass('fa-check-square-o');
+            }
+            $(this).data("clicks", !clicks);
+        });
+    });
+    /*]]>*/
+</script>
+</html>

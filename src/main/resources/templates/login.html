@@ -1,0 +1,95 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>裕利机械生产管理系统 | 登录</title>
+    <meta name="referrer" content="origin" />
+    <th:block th:include="common/include::head" />
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+    <div class="login-logo">
+       <b>裕利机械生产管理系统</b>
+      <!-- <p th:text="${host}"></p> -->
+    </div>
+    <!-- /.login-logo -->
+    <div class="login-box-body">
+        <p class="login-box-msg"><img th:src="@{/scripts/dist/img/logo.jpg}" width="50"height="30" class="img-circle" alt="User Image" />请输入账号和密码</p>
+        <div style="color:#FF0000" id="error-message"></div>
+        <div class="form-group has-feedback">
+            <input type="text" id="account" class="form-control" placeholder="Account" />
+            <span class="glyphicon glyphicon-user form-control-feedback"></span>
+        </div>
+        <div class="form-group has-feedback">
+            <input type="password" id="password" class="form-control" placeholder="Password" />
+            <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+        </div>
+        <div class="row">
+            <!-- /.col -->
+            <div class="col-xs-4">
+                <button type="button" class="btn btn-primary btn-block btn-flat" onclick="submitLogin();"style="margin-left:234px;">登录</button>
+            </div>
+            <!-- /.col -->
+        </div>
+    </div>
+    <!-- /.login-box-body -->
+</div>
+<!-- /.login-box -->
+</body>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    $(function () {
+        $(document).keyup(function(event){
+            if(event.keyCode == 13){
+                submitLogin();
+            }
+        });
+    });
+
+    function submitLogin() {
+        if ($("#account").val().length < 1 || $("#account").val().length > 15) {
+            $("#error-message").html("账号不能为空，账号长度必须 1 - 15 之间！");
+            return;
+        }
+
+        if ($("#password").val().length < 6 || $("#account").val().length > 16) {
+            $("#error-message").html("密码不能为空，密码长度必须 6 - 16 之间！");
+            return;
+        }
+
+        var url = [[@{/login}]];
+        var data = {
+            account: $("#account").val(),
+            password: $("#password").val()
+        };
+
+        $.post(url, data, function () {
+            window.location.href = [[@{/index}]];
+        }).error(function (XMLHttpRequest) {
+            if (XMLHttpRequest.status == 500) {
+                $("#error-message").html("服务器异常，请联系管理员！");
+            } else if (XMLHttpRequest.status == 404) {
+                $("#error-message").html("请求地址不存在，请联系管理员！");
+            } else {
+                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                    // console.log(XMLHttpRequest.responseJSON.code);
+                    var message = XMLHttpRequest.responseJSON.message;
+                    var errors = XMLHttpRequest.responseJSON.errors;
+                    if (errors && errors.length > 0) {
+                        message += "<ul>";
+                        $.each(errors, function (i, error) {
+                           if (error && error.message) {
+                               message += "<li>" + error.message + "</li>";
+                           }
+                        });
+                        message += "</ul>";
+                    }
+                    $("#error-message").html(message);
+                } else {
+                    $("#error-message").html("服务器异常，请联系管理员！");
+                }
+            }
+        });
+    }
+    /*]]>*/
+</script>
+</html>

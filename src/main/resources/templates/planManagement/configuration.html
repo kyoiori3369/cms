@@ -1,0 +1,411 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:v-on="http://www.w3.org/1999/xhtml"
+      xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head th:replace="common/head::head"></head>
+<body class="hold-transition skin-blue sidebar-mini">
+<script type="text/javascript" th:src="@{/scripts/js/laydate.js}"></script>
+<script type="text/javascript" th:src="@{/scripts/js/jquery.form.min.js}"></script>
+<div class="wrapper">
+    <th:block th:replace="header::header"/>
+    <th:block th:replace="menu::menu(6, 1)"/>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1 th:replace="common/name::content"></h1>
+            <ol class="breadcrumb">
+                <li><a href="javascript:void(0);"><i class="fa fa-server"></i> 零件配置</a></li>
+                <li class="active">零件配置</li>
+            </ol>
+        </section>
+        <!-- Main content -->
+        <section class="content" id="app">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">零件列表</h3>
+                    <div class="box-tools">
+                        <div class="input-group input-group-sm" style="width: 150px;">
+                            <input type="text" name="partName" class="form-control pull-right"
+                                   placeholder="零件名称"/>
+                            <div class="input-group-btn">
+                                <button type="submit" class="btn btn-default" v-on:click="search(1);"><i class="fa fa-search"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <div class="mailbox-controls">
+                        <!-- Check all button -->
+                        <button type="button" class="btn btn-default btn-sm checkbox-toggle"><i class="fa fa-square-o"></i></button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default btn-sm" v-on:click="openServiceWindow(0,'零件新增');"><i class="fa fa-plus"></i></button>
+                            <button type="button" class="btn btn-default btn-sm" v-on:click="deleteServices();"><i class="fa fa-trash-o"></i></button>
+                        </div>
+                        <!-- /.btn-group -->
+                        <button type="button" class="btn btn-default btn-sm" v-on:click="search(1);"><i class="fa fa-refresh"></i></button>
+                        <div class="pull-right">
+                            {{start}} - {{end}} / {{total}}
+                            <!-- /.btn-group -->
+                        </div>
+                        <!-- /.pull-right -->
+                    </div>
+                    <div class="table-responsive mailbox-messages">
+                        <table class="table table-hover">
+                            <tr>
+                                <th></th>
+                                <th nowrap="true">零件编码</th>
+                                <th nowrap="true">零件名称</th>
+                                <th nowrap="true">零件品牌</th>
+                                <th nowrap="true">零件规则</th>
+                                <th nowrap="true">零件渠道</th>
+                                <th nowrap="true">零件单价</th>
+                                <th nowrap="true">备注</th>
+                                <th nowrap="true">缩略图</th>
+                                <th nowrap="true">操作</th>
+                            </tr>
+                            <tr v-for="item in configs">
+                                <td nowrap="true"><input type="checkbox" v-bind:value="item.id" /></td>
+                                <td nowrap="true">{{item.partCode}}</td>
+                                <td nowrap="true">{{item.partName}} </td>
+                                <td nowrap="true">{{item.partBrand}}</td>
+                                <td nowrap="true">{{item.ruleModel}}</td>
+                                <td nowrap="true">{{item.partSource}}</td>
+                                <td nowrap="true">{{item.partPrice}}</td>
+                                <td nowrap="true">{{item.remarks}}</td>
+                                <td nowrap="true"> <img v-if="item.partImage != null" v-bind:src="item.partImage" width="40"height="40"/></td>
+                                <td nowrap="true">
+                                    <a href="javascript:void(0);" v-on:click="openServiceWindow(item.id,'零件修改');">修改</a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer clearfix">
+                    <ul class="pagination pagination-sm no-margin pull-right">
+                        <li><a href="javascript:void(0);" v-on:click="search(1);">&laquo;</a></li>
+                        <li v-for="item in size" v-if="item == page"><a href="javascript:void(0);">{{item}}</a></li>
+                        <li v-else="v-else"><a href="javascript:void(0);" v-on:click="search(item);">{{item}}</a></li>
+                        <li><a href="javascript:void(0);"v-on:click="search(size);">&raquo;</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="modal fade" id="service-dialog" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <div class="box box-primary modal-content">
+                        <div class="modal-header with-border">
+                            <h3 class="modal-title"></h3>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <input type="hidden" id="id" v-model="config.id" />
+                                <label class="col-sm-3 control-label"for="partSource">零件渠道</label>
+                                <select id="partSource"  class="select"style="width:405px;"v-model="config.partSource">
+                                    <option value="采购">采购</option>
+                                    <option value="外加工">外加工</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label"for="partCode">零件编号</label>
+                                <input type="text" class="form-control" id="partCode" placeholder="零件编号" v-model="config.partCode" style="display:inline-block;width:404px;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label"for="partName">零件名称</label>
+                                <input type="text" class="form-control" id="partName" placeholder="零件名称" v-model="config.partName" style="display:inline-block;width:404px;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label"for="partBrand">零件品牌</label>
+                                <input type="text" class="form-control" id="partBrand" placeholder="零件品牌" v-model="config.partBrand" style="display:inline-block;width:405px;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label"for="partSupplier">零件供货商</label>
+                                <input type="text" class="form-control" id="partSupplier" placeholder="零件供货商" v-model="config.partSupplier" style="display: inline-block;width:404px;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label"for="ruleModel">规则/型号</label>
+                                <input type="text" class="form-control" id="ruleModel" placeholder="规则/型号" v-model="config.ruleModel" style="display:inline-block;width:404px;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"for="partState">零件状态</label>
+                                <select id="partState"  class="select"style="width:403px;"v-model="config.partState">
+                                    <option value="启用">启用</option>
+                                    <option value="停用">停用</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label"for="partPrice">零件单价</label>
+                                <input  type="text" class="form-control" id="partPrice" placeholder="零件单价" v-model="config.partPrice" style="display: inline-block;width:396px;"/>
+                                <span style="font-weight:bold">RMB</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label"for="partImage">零件图片</label>
+                                <img th:src="@{/scripts/dist/img/image.jpg}" id="image" alt="image"width="100"height="100"/>
+                                <input type="hidden" id="partImage" v-model = "config.partImage" />
+                                <form enctype="multipart/form-data" method="post" th:action="@{/upload-file}" id="form">
+                                    <div >
+                                        <span id="fileDiv">
+                                             <input type='file' class="col-sm-9 input-Image" name="file" id="file" v-on:change="uploadFile();"style="float:left;width: 77px;margin-left:129px"/>
+                                        </span>
+
+                                    </div>
+
+                                </form>
+                            </div>
+                            <div class="form-group" style="clear: both">
+                                <label class="col-sm-3  control-label"for="remarks">备注</label>
+                                <textarea id="remarks"style="margin: 0px; width: 394px; height: 170px;"v-model="config.remarks" ></textarea>
+                            </div>
+                        </div>
+
+                        <!-- /.box-body -->
+                        <div class="modal-footer">
+                            <button type="submit" id="submitx"class="btn btn-primary" v-on:click="submitService();">提交</button>
+                            <button type="submit" class="btn btn-default pull-right" v-on:click="closeServiceWindow();">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <th:block th:replace="footer::footer"/>
+</div>
+<!-- ./wrapper -->
+</body>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    $(function () {
+        var vue = new Vue({
+            el: "#app",
+            data: {
+                total: 0,
+                start: 0,
+                end: 0,
+                size: 0,
+                page: 1,
+                rows: 10,
+                configs: [],
+                pager: {},
+                config: {},
+                dialog: {}
+            },
+            methods: {
+                search: function (index) {
+                    var size = Math.ceil(this.total / this.rows);
+                    if (!index) {
+                        index = 1;
+                    }
+                    if (index > size) {
+                        index = size;
+                    }
+                    if (index < 1) {
+                        index = 1;
+                    }
+                    this.page = index;
+                    var _self = this;
+                    var url = [[@{/api/partConfiguration}]];
+                    $.get(url, {
+                        partName: $("input[name='partName']").val(),
+                        page: this.page,
+                        rows: this.rows
+                    }, function (datas) {
+                        if (datas && datas.configs) {
+                            _self.configs = datas.configs;
+                            $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                            var clicks = $(".checkbox-toggle").data('clicks');
+                            if (clicks) {
+                                $(".checkbox-toggle").click();
+                            }
+                            _self.total = datas.pager.total;
+                            _self.size = Math.ceil(_self.total / _self.rows);
+                            _self.start = (_self.page - 1) * _self.rows + 1;
+                            _self.end = Math.min(_self.total, _self.page * _self.rows);
+                        }
+                    }).error(function (XMLHttpRequest) {
+                        window.top.errorMessage(XMLHttpRequest);
+                    });
+                },
+                //图片上传
+                uploadFile:function () {
+                    var _sfle = this;
+                    var upload_url = [[@{/upload-file}]];
+                        var ajaxFormOpt = {
+                            url: upload_url,
+                            type: 'post',
+                            dateType: 'text',
+                            cache: false,
+                            success: function (tempPath) {
+                                var json = $.parseJSON(tempPath);
+                                $("#image").attr("src", json.src);
+                                _sfle.config.partImage = json.path;
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                } else {
+                                    layer.alert('上传失败', {title: '操作提示', icon: 2});
+                                }
+                            }
+                        };
+                        $("#form").ajaxForm(ajaxFormOpt);
+                        $("#form").submit(function () {
+                            $(this).ajaxSubmit();
+                            return false;
+                        });
+                        $("#form").submit()
+                    },
+                    openServiceWindow: function (id, title) {
+                        this.dialog.find("h3.modal-title").html(title);
+                        if (id > 0) {
+                            var services_api_url = [[@{/api/partConfiguration}]];
+                            var _self = this;
+                            $.get(services_api_url + "/" + id, function (result) {
+                                if (result) {
+                                    _self.config = result;
+                                    $("#image").attr("src", result.partImage);
+                                    //_self.config.partImage = result.partImage
+
+                                }
+                            }).error(function (XMLHttpRequest) {
+                                window.top.errorMessage(XMLHttpRequest);
+                            });
+                        }
+                        this.dialog.modal("show");
+                    },
+                    initDialog: function () {
+                        this.dialog = $('#service-dialog').modal({
+                            backdrop: false,
+                            keyboard: false,
+                            show: false
+                        });
+                        this.dialog.modal("hide");
+                    },
+                    closeServiceWindow: function () {
+                        this.config={};
+                        $('#submitx').attr("disabled",false);
+                        $("#image").removeAttr('src');
+                        location.reload();
+                        this.dialog.modal("hide");
+                    },
+                    submitService: function () {
+                        $('#submitx').attr("disabled",true);
+                        var price = /^[1-9]\d*$/;
+                        if(!price.test(this.config.partPrice)){
+                            layer.alert('零件单价为整数', {title: '操作提示', icon: 2});
+                            $('#submitx').attr("disabled",false);
+                            return false;
+                        }
+                        var method = this.config.id > 0 ? "PUT" : "POST";
+                        var configs_api_url = [[@{/api/partConfiguration}]];
+                        var _self = this;
+                        $.ajax({
+                            url : configs_api_url,
+                            type: method,
+                            data: JSON.stringify(_self.config),
+                            contentType: 'application/json',
+                            success: function() {
+                                _self.closeServiceWindow();
+                                _self.search(_self.page);
+                                var message = "添加成功";
+                                if (_self.config.id > 0) {
+                                    message = "更新成功";
+                                }
+                                layer.alert(message, {title: '操作提示', icon: 1});
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    // console.log(XMLHttpRequest.responseJSON.code);
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                } else {
+                                    var message = "添加失败";
+                                    if (id > 0) {
+                                        message = "更新失败";
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 2});
+                                }
+                            }
+                        });
+                    },
+                    deleteServices: function () {
+                        var ids = [];
+                        $(".mailbox-messages input:checked").each(function () {
+                            ids.push($(this).val());
+                        });
+                        var configs_api_url = [[@{/api/partConfiguration}]];
+                        var _self = this;
+                        $.ajax({
+                            url : configs_api_url,
+                            type: 'DELETE',
+                            data: JSON.stringify(ids),
+                            contentType: 'application/json',
+                            success: function() {
+                                layer.alert('删除成功', {title: '操作提示', icon: 1});
+                                var clicks = $(".checkbox-toggle").data('clicks');
+                                if (clicks) {
+                                    $(".checkbox-toggle").click();
+                                }
+                                _self.search(_self.page);
+                            },
+                            error: function (XMLHttpRequest) {
+                                if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                    // console.log(XMLHttpRequest.responseJSON.code);
+                                    var message = XMLHttpRequest.responseJSON.message;
+                                    var errors = XMLHttpRequest.responseJSON.errors;
+                                    if (errors && errors.length > 0) {
+                                        $.each(errors, function (i, error) {
+                                            if (error && error.message) {
+                                                message += "<br />" + error.message;
+                                            }
+                                        });
+                                    }
+                                    layer.alert(message, {title: '操作提示', icon: 0});
+                                } else {
+                                    layer.alert('删除失败', {title: '操作提示', icon: 2});
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+        vue.initDialog();
+        vue.search(1);
+
+        $(".checkbox-toggle").click(function () {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                //Uncheck all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+                $(".fa", this).removeClass("fa-check-square-o").addClass('fa-square-o');
+            } else {
+                //Check all checkboxes
+                $(".mailbox-messages input[type='checkbox']").iCheck("check");
+                $(".fa", this).removeClass("fa-square-o").addClass('fa-check-square-o');
+            }
+            $(this).data("clicks", !clicks);
+        });
+    });
+    /*]]>*/
+</script>
+</html>

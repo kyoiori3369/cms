@@ -1,0 +1,21 @@
+[
+  {
+    "_class": "org.itachi.codestar.domain.AdminUser",
+    "userNo": "00000001",
+    "userName": "admin",
+    "password": "111111",
+    "roleId": 1,
+    "roleNo": "0001",
+    "roleName": "超级管理员",
+    "lastLoginIP": "127.0.0.1",
+    "lastLoginTime": 1497335025953,
+    "lastLogoutTime": 1497335025953,
+    "loginTimes": 1,
+    "departmentId": 1,
+    "departmentNo": "0001",
+    "duty": "会写一些代码的职业PPT制作师",
+    "createTime": 1497335025953,
+    "updateTime": 1497335025953
+  }
+
+]

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.itachi.codestar.mapper.OrderMapper">
+
+    <resultMap id="orderResultMap" type="order">
+        <id property="id" column="id"/>
+        <result property="customerId" column="customer_id" javaType="long"/>
+        <result property="number" column="number" javaType="string"/>
+        <result property="time" column="time" javaType="string"/>
+        <result property="status" column="status" javaType="string"/>
+        <result property="storageTime" column="storage_time" javaType="string"/>
+        <result property="createTime" column="create_time" javaType="long"/>
+        <result property="date" column="date" javaType="int"/>
+        <result property="customerName" column="customer_name" javaType="string"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="deliveryTime" column="delivery_time" javaType="string"/>
+        <result property="deleted" column="deleted" javaType="int"/>
+    </resultMap>
+    <resultMap id="orderManageResultMap" type="orderManage">
+        <id property="id" column="id"/>
+        <result property="customerId" column="customer_id" javaType="long"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="deliveryTime" column="delivery_time" javaType="string"/>
+        <result property="orderStatus" column="order_status" javaType="int"/>
+        <result property="orderTime" column="order_time" javaType="string"/>
+        <result property="customerName" column="customer_name" javaType="string"/>
+        <result property="createTime" column="create_time" javaType="string"/>
+        <result property="increment" column="increment" javaType="int"/>
+        <result property="companyCode" column="company_code" javaType="string"/>
+        <result property="companyName" column="company_name" javaType="string"/>
+        <result property="deleted" column="deleted" javaType="int"/>
+        <result property="orderStatusName" column="orderStatusName" javaType="string"/>
+        <result property="expectDate" column="expect_date" javaType="string"/>
+    </resultMap>
+
+
+    <resultMap id="testDeviceResultMap" type="testDevice">
+        <id property="id" column="id"/>
+        <result property="customerId" column="customer_id" javaType="long"/>
+        <result property="orderNumber" column="order_number" javaType="string"/>
+        <result property="deviceNumber" column="devic_number" javaType="string"/>
+        <result property="deviceName" column="device_name" javaType="string"/>
+        <result property="plannedTime" column="planned_time" javaType="string"/>
+        <result property="outageTime" column="outage_time" javaType="string"/>
+        <result property="assemblyTime" column="assembly_time" javaType="string"/>
+        <result property="debugTime" column="debug_time" javaType="string"/>
+        <result property="debugState" column="debug_state" javaType="string"/>
+        <result property="remarks" column="remarks" javaType="string"/>
+        <result property="loadingState" column="loading_state" javaType="string"/>
+        <result property="loadingTime" column="loading_time" javaType="string"/>
+        <result property="loadingNumber" column="loading_number" javaType="string"/>
+    </resultMap>
+
+
+    <select id="findOrder" resultMap="orderResultMap" parameterType="map">
+        select a.*, c.company_code, c.company_name, c.name as company_name from order_t a left join customer c on a.customer_id=c.id
+        where a.deleted = 0
+        <if test="number != null and number.length() > 0">
+            a.number=#{number}
+        </if>
+    </select>
+
+    <select id="countOrder" resultType="int">
+        select count(1) from order_manage a
+        where a.deleted = 0
+        <if test="orderNumber != null and orderNumber != ''">
+            and a.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+    </select>
+
+    <select id="findOrderManage" resultMap="orderManageResultMap" parameterType="map">
+        select a.*,
+        case when a.order_status =0 then '待计划' when a.order_status =1 then '生产中' when a.order_status =2 then '已完成' end as orderStatusName,
+        c.company_code, c.company_name, c.name as company_name from order_manage a left join customer c on a.customer_id=c.id
+        where a.deleted = 0
+        <if test="orderNumber != null and orderNumber.length() > 0">
+            and a.order_number like CONCAT('%',#{orderNumber},'%')
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+    <select id="findOrderNumber" resultType="Integer">
+        select max(a.increment) from order_manage a where a.create_time = #{0}
+    </select>
+
+    <select id="findTestDevice" resultMap="testDeviceResultMap" parameterType="map">
+        select a.*,t.device_number,t.device_name,t.device_rule,b. from test_device a
+        inner join equipment_assembly b
+        on a.order_id = b.id
+        inner join customer c
+        on c.id =b.customer_id
+        inner join device_t t
+        on t.id =a.device_id
+        <if test="status != null and status > 0">
+            where a.status=#{status}
+        </if>
+        order by a.id desc
+        limit #{offset},#{rows}
+    </select>
+
+    <update id="deleteAllByOrderIdIn">
+        update order_manage a  set a.deleted = 1
+        where a.id = #{0}
+    </update>
+
+    <update id="updateOrderDate">
+        update order_manage a  set a.delivery_time = (select max(delivery_time) from order_device b where b.order_id = #{0})
+        where a.id = #{0}
+    </update>
+     <select id="findSum" resultType="Integer">
+        SELECT sum(t.part_price*t.number)  FROM historical_records t where t.status = 0 and date_format(t.out_and_end_time,'%Y-%m') = #{0}
+     </select>
+    <select id="findCore" resultType="java.util.HashMap">
+        SELECT date_format(a.create_time,'%m') time , count(1) as count  FROM plan_device a where a.deleted =0 and a.status = 1 and date_format(a.create_time,'%Y') = date_format(sysdate(),'%Y') and a.device_id = #{0} group by date_format(a.create_time,'%m')
+    </select>
+
+    <update id="updateOrderStatus">
+        update order_manage set order_status = #{status} where id = #{id}
+    </update>
+
+
+
+
+</mapper>
